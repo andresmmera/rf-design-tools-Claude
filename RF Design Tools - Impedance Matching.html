@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>RF Design Tools - Impedance Matching</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@1,900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--ink:#212529;--muted:#6c757d;--card:#fff;--line:#dee2e6;--boxbg:#f8f9fa;--thead:#e9ecef;--nav:#1c2f4a;--field:#fff;--primary:#0d6efd;--grid:#e3e3e3;--warnbg:#fff3cd;--warnink:#664d03;--c1:#1f5fe0;--c2:#e5262b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16191d;--ink:#e4e7ea;--muted:#9aa4ad;--card:#1e2227;--line:#343a40;--boxbg:#1a1e22;--thead:#2a2f35;--nav:#0f1b2d;--field:#14181c;--primary:#6ea8fe;--grid:#30363c;--warnbg:#332701;--warnink:#ffda6a;--c1:#6ea8fe;--c2:#ff6b70}}
+:root[data-theme="dark"]{--bg:#16191d;--ink:#e4e7ea;--muted:#9aa4ad;--card:#1e2227;--line:#343a40;--boxbg:#1a1e22;--thead:#2a2f35;--nav:#0f1b2d;--field:#14181c;--primary:#6ea8fe;--grid:#30363c;--warnbg:#332701;--warnink:#ffda6a;--c1:#6ea8fe;--c2:#ff6b70}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+h2,h5,p{margin:0}[hidden]{display:none!important}
+.navbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--nav);padding:8px 16px}
+.brand{font:italic 900 22px Lato,system-ui,sans-serif;color:#fff}.brand span{color:#ffc107}
+.container-fluid{padding:12px 16px 32px}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.tool-name{font-size:2rem;font-weight:500;margin:6px 0 10px}
+.box_form{flex:0 0 auto;width:330px;max-width:100%;padding:10px;background:var(--boxbg);border:1px solid var(--line);border-radius:.375rem}
+.box{flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:14px}
+@media (max-width:1100px){.box_form,.col{width:100%}}
+.col{display:flex;flex-direction:column;gap:16px;flex:0 0 auto;width:330px;max-width:100%}
+textarea{width:100%;min-height:240px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:.25rem;padding:8px}a.btn{text-decoration:none;display:inline-block}
+h5{font-size:1.15rem;font-weight:500;text-align:center;margin:4px 0 8px}
+.table{width:100%;border-collapse:collapse;margin-bottom:10px}
+.table td{padding:.35rem .5rem;border-bottom:1px solid var(--line);vertical-align:middle}
+.table thead td{background:var(--thead);font-weight:600}
+input[type=number],select,input[type=file]{font:inherit;font-size:15px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:.25rem;padding:.2rem .35rem;max-width:100%}
+select.w{width:100%}
+.btn{font:inherit;font-size:14px;cursor:pointer;border:1px solid var(--muted);border-radius:.25rem;padding:.25rem .6rem;color:var(--ink);background:transparent}
+.btn:hover{background:var(--thead)}.btn-p{background:#198754;border-color:#198754;color:#fff}.btn-p:hover{background:#157347}.btn-w{background:#ffc107;border-color:#ffc107;color:#000}.btn-w:hover{background:#ffca2c}
+.btn:focus-visible,input:focus-visible,select:focus-visible,#sv:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+.btn-row{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:.375rem;padding:10px 12px}
+.card h5{text-align:left;margin:0 0 6px}
+.hint{font-size:12.5px;color:var(--muted)}
+.alert{padding:.5rem .8rem;border-radius:.375rem;font-size:14px;background:var(--warnbg);color:var(--warnink)}
+#schv{overflow-x:auto;border:1px solid var(--line);border-radius:.25rem}
+#sv{display:block;stroke:var(--ink);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;cursor:default}
+#sv text{fill:var(--ink);stroke:none;font:11px monospace;text-anchor:middle}#sv text.m{fill:var(--muted)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+canvas{display:block;max-width:100%;margin:0 auto;touch-action:pan-y}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:4px 12px;margin:0}.sum dt{font-size:12.5px;color:var(--muted)}.sum dd{margin:0;font:500 16px ui-monospace,Menlo,Consolas,monospace}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;font-size:12px}
+</style></head><body>
+<nav class="navbar"><span class="brand">RF <span>Design Tools</span></span></nav>
+<div class="container-fluid"><h2 class="tool-name">Impedance Matching Tool</h2>
+<div class="row">
+<div class="col" id="lf"><div class="box_form" style="width:100%"><h5>Load &amp; Frequency</h5><table class="table"><tbody id="lt"></tbody></table></div><div class="box_form" style="width:100%"><h5>Simulation Parameters</h5><table class="table"><tbody id="st"></tbody></table></div><div class="box_form" style="width:100%"><h5>Display Parameters</h5><table class="table"><tbody id="dt"></tbody></table></div></div>
+<div class="box" id="ch">
+ <div id="alert" class="alert" hidden></div>
+ <div class="card"><h5>Schematic <span class="hint" style="font-weight:400">(click a part, or use <kbd>◀</kbd><kbd>▶</kbd> focus, <kbd>▲</kbd><kbd>▼</kbd> value; Shift = coarse, Alt = fine)</span></h5>
+  <div id="schv"><svg id="sv" tabindex="0" height="230"></svg></div></div>
+ <div class="two"><div class="card"><h5>Smith chart</h5><canvas id="smith"></canvas></div>
+ <div class="card"><h5>|S11| (dB)</h5><canvas id="mag"></canvas></div></div>
+ <div class="card"><dl class="sum" id="sum"></dl></div>
+ <div class="card" id="exC" hidden><h5 id="exT"></h5><textarea id="exA" readonly spellcheck="false"></textarea><div class="btn-row"><a class="btn" id="exL">Download file</a><button class="btn" id="exCp">Copy text</button></div><p class="hint" id="exN"></p></div>
+</div>
+<div class="box_form" id="rf"><h5>Automatic Matching</h5><table class="table"><tbody id="rt"></tbody></table>
+ <div class="btn-row"><button class="btn btn-p" id="apply">Match</button><button class="btn btn-w" id="optb">Optimize in band</button></div>
+ <p class="hint" id="msg"></p>
+ <h5 style="margin-top:12px">Components</h5>
+ <div class="btn-row"><select id="addt"></select><button class="btn" id="add">Add after focus</button><button class="btn" id="del">Delete</button><button class="btn" id="clr">Clear</button></div>
+ <div class="btn-row"><button class="btn" id="bl">◀</button><button class="btn" id="br">▶</button><button class="btn" id="bu">▲</button><button class="btn" id="bd">▼</button></div>
+ <table class="table"><tbody><tr><td colspan="2" id="en" style="font-weight:600"></td></tr><tr><td id="evl">Value</td><td><input type="number" id="ev" step="any" style="width:7em"> <span id="evu"></span></td></tr><tr id="ezr"><td>Z<sub>c</sub> (Ω)</td><td><input type="number" id="ez" step="any" style="width:7em"></td></tr></tbody></table>
+ <h5>Export</h5><div class="btn-row"><button class="btn" id="exq">Qucs-S (.sch)</button><button class="btn" id="exm">EMerge (.py)</button></div><p class="hint" id="exh"></p>
+</div></div></div>
+<script>
+(()=>{'use strict';
+const $=i=>document.getElementById(i),PI=Math.PI,V=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const ca=(a,b)=>[a[0]+b[0],a[1]+b[1]],cm=(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]];
+const cd=(a,b)=>{const d=b[0]*b[0]+b[1]*b[1]||1e-30;return[(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d]};
+const g4=v=>+v.toPrecision(4),g3=v=>+v.toPrecision(3);
+const row=(l,h,c='')=>`<tr class="${c}"><td>${l}</td><td>${h}</td></tr>`;
+const inp=(id,v,w=5)=>`<input type=number id=${id} value=${v} step=any style="width:${w}em">`;
+const sel=(id,o,c='')=>`<select id=${id} class="${c}">${o.map(x=>`<option value="${x[0]}">${x[1]}`).join('')}</select>`;
+$('lt').innerHTML=row('Load',sel('lm',[['c','R + jX constant'],['s','s1p file']],'w'))+row('R (Ω)',inp('R',20),'ck')+row('X (Ω)',inp('X',30),'ck')+row('s1p file','<input type=file id=fi accept=".s1p,.txt,.S1P">','cs')+row('Z<sub>0</sub> (Ω)',inp('Z0',50))+
+row('Freq unit',sel('fu',[[1,'Hz'],[1e3,'kHz'],[1e6,'MHz'],[1e9,'GHz']]))+row('f<sub>0</sub> (match / ref)',inp('f0',1))+row('Band start',inp('f1',.9))+row('Band stop',inp('f2',1.1))+'';
+$('st').innerHTML=row('Start freq (unit above)',inp('fa',.5))+row('Stop freq',inp('fb',1.5))+row('Points',inp('np',201,4));
+$('dt').innerHTML=row('Y scale (dB/div)',inp('ys',10,4))+row('Y maximum (dB)',inp('ymax',0,4))+row('Y minimum (dB)',inp('ymin',-40,4))+row('X divisions',inp('xt',6,4))+row('Smith impedance grid','<input type=checkbox id=zg checked>')+row('Smith admittance grid','<input type=checkbox id=yg>')+row('Matching path at f0','<input type=checkbox id=mp checked>');
+$('fu').value=1e9;
+$('rt').innerHTML=row('Method',sel('meth',[['lsec','L-section (lumped)'],['pi','Pi network'],['t','T network'],['xf','Ideal transformer'],['qw','Quarter-wave transformer'],['bin','Multisection binomial'],['cheb','Multisection Chebyshev (opt.)'],['texp','Exponential taper'],['tlin','Linear taper']],'w'))+
+row('Match at',sel('tm',[['f','Frequency f0'],['b','Band f1–f2']]))+row('Sections / slices',inp('N',3,4))+row('Q (pi / T)',inp('Q',3,4))+row('Taper length (λ)',inp('TL',1,4))+row('L-section solution',sel('sol',[[1,'1'],[2,'2']]));
+const T={sL:['Series L','nH',1e-9,'L'],sC:['Series C','pF',1e-12,'C'],sR:['Series R','Ω',1,'R'],pL:['Shunt L','nH',1e-9,'L'],pC:['Shunt C','pF',1e-12,'C'],pR:['Shunt R','Ω',1,'R'],tl:['Series line','°',1,'TL'],os:['Open stub','°',1,'OS'],ss:['Short stub','°',1,'SS'],xf:['Transformer n:1','',1,'T']};
+$('addt').innerHTML=Object.keys(T).map(k=>`<option value="${k}">${T[k][0]}`).join('');
+const isSh=t=>t==='pL'||t==='pC'||t==='pR'||t==='os'||t==='ss';
+let net=[],cur=0,S1=null,D=null,HV=null,Z0=50,F0=1e9,F1=0,F2=0,FA=0,FB=0,NP=201,YM=-40,YX=0,YS=10,XT=6,UN=1e9;
+const rd=()=>{UN=+$('fu').value;const g=i=>+$(i).value*UN;Z0=+$('Z0').value||50;F0=g('f0');F1=g('f1');F2=g('f2');FA=g('fa');FB=g('fb');NP=Math.min(1001,Math.max(11,+$('np').value|0));YX=+$('ymax').value;YM=Math.min(YX-3,+$('ymin').value);YS=Math.max(.5,+$('ys').value||10);XT=Math.min(12,Math.max(2,(+$('xt').value|0)||6))};
+const setF=(id,v)=>$(id).value=+(v/UN).toPrecision(6);
+/* load */
+const zs=s=>{const z=cd(ca([1,0],s),[1-s[0],-s[1]]);return[z[0]*S1.z0,z[1]*S1.z0]};
+function ZL(f){if($('lm').value==='s'&&S1){const F=S1.f,n=F.length;let lo=0,hi=n-1;if(f<=F[0])return zs(S1.s[0]);if(f>=F[n-1])return zs(S1.s[n-1]);while(hi-lo>1){const m=(lo+hi)>>1;F[m]>f?hi=m:lo=m}const t=(f-F[lo])/(F[hi]-F[lo]),a=S1.s[lo],b=S1.s[hi];return zs([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])])}return[+$('R').value,+$('X').value]}
+function parse(t){let u=1e9,fm='MA',z0=50;const f=[],s=[];for(let l of t.split(/\r?\n/)){l=l.split('!')[0].trim();if(!l)continue;if(l[0]==='#'){const k=l.slice(1).toUpperCase().split(/\s+/).filter(Boolean);k.forEach((w,i)=>{if(w==='HZ')u=1;if(w==='KHZ')u=1e3;if(w==='MHZ')u=1e6;if(w==='GHZ')u=1e9;if(w==='RI'||w==='MA'||w==='DB')fm=w;if(w==='R')z0=+k[i+1]});continue}
+const v=l.split(/\s+/).map(Number);if(v.length<3||v.some(isNaN))continue;let re,im;if(fm==='RI'){re=v[1];im=v[2]}else{const m=fm==='DB'?Math.pow(10,v[1]/20):v[1];re=m*Math.cos(v[2]*PI/180);im=m*Math.sin(v[2]*PI/180)}f.push(v[0]*u);s.push([re,im])}return f.length>1?{f,s,z0}:null}
+$('fi').addEventListener('change',e=>{const fl=e.target.files[0];if(!fl)return;const r=new FileReader();r.onload=()=>{const p=parse(String(r.result));if(!p){alert('Could not parse the s1p file.');return}S1=p;const a=p.f[0],b=p.f[p.f.length-1];$('fu').value=b>=1e9?1e9:b>=1e6?1e6:b>=1e3?1e3:1;rd();const sp=b-a;setF('fa',a);setF('fb',b);setF('f1',a+.25*sp);setF('f2',a+.75*sp);setF('f0',Math.sqrt((a+.25*sp)*(a+.75*sp)));pu=UN;upd()};r.readAsText(fl)});
+/* network */
+function zin(f,n,zl){let Z=zl;const w=2*PI*f;for(let k=n.length-1;k>=0;k--){const e=n[k],v=e.v;let y;
+switch(e.t){case'sL':Z=ca(Z,[0,w*v]);continue;case'sC':Z=ca(Z,[0,-1/(w*v)]);continue;case'sR':Z=ca(Z,[v,0]);continue;case'xf':Z=[Z[0]*v*v,Z[1]*v*v];continue;
+case'tl':{const t=Math.tan(v*PI/180*f/F0);Z=cm([e.z,0],cd(ca(Z,[0,e.z*t]),ca([e.z,0],cm([0,t],Z))));continue}
+case'pL':y=[0,-1/(w*v)];break;case'pC':y=[0,w*v];break;case'pR':y=[1/v,0];break;
+case'os':y=[0,Math.tan(v*PI/180*f/F0)/e.z];break;default:y=[0,-1/(e.z*Math.tan(v*PI/180*f/F0))]}
+Z=cd([1,0],ca(cd([1,0],Z),y))}return Z}
+const gam=Z=>cd([Z[0]-Z0,Z[1]],[Z[0]+Z0,Z[1]]),mg=g=>Math.hypot(g[0],g[1]),db=g=>20*Math.log10(Math.max(mg(g),1e-6));
+/* auto match */
+function match(){rd();const band=$('tm').value==='b',m=$('meth').value,f=band?Math.sqrt(F1*F2):F0;if(band){F0=f;setF('f0',f)}
+const zl=ZL(f),RL=Math.max(zl[0],.01),XL=zl[1],w=2*PI*f,N=Math.max(1,+$('N').value|0),n=[],msg=[];
+const mk=(t,v,z)=>({t,v,z}),ser=X=>Math.abs(X)<1e-9?0:(X>0?mk('sL',X/w):mk('sC',-1/(w*X))),shu=B=>Math.abs(B)<1e-12?0:(B>0?mk('pC',B/w):mk('pL',-1/(w*B))),add=e=>{if(e)n.push(e)};
+let opt=band||m==='cheb';
+if(m==='lsec'){const sg=$('sol').value==='1'?1:-1;
+ if(RL>Z0){const D=Math.sqrt(RL/Z0*Math.max(0,RL*RL+XL*XL-Z0*RL)),B=(XL+sg*D)/(RL*RL+XL*XL),X=1/B+XL*Z0/RL-Z0/(B*RL);add(ser(X));add(shu(B))}
+ else{add(shu(sg*Math.sqrt((Z0-RL)/RL)/Z0));add(ser(sg*Math.sqrt(RL*(Z0-RL))-XL))}}
+else if(m==='pi'||m==='t'){const mx=Math.max(Z0,RL),mn=Math.min(Z0,RL);let Q=+$('Q').value;const qm=Math.sqrt(mx/mn-1)+.05;if(Q<qm){Q=qm;msg.push('Q raised to the minimum feasible value '+g3(Q)+'.')}
+ if(m==='pi'){const Rv=mx/(Q*Q+1),q1=Math.sqrt(Z0/Rv-1),q2=Math.sqrt(RL/Rv-1);add(shu(q1/Z0));add(ser((q1+q2)*Rv));add(shu(q2/RL));add(ser(-XL))}
+ else{const Rv=mn*(Q*Q+1),q1=Math.sqrt(Rv/Z0-1),q2=Math.sqrt(Rv/RL-1);add(ser(q1*Z0));add(shu((q1+q2)/Rv));add(ser(q2*RL-XL))}}
+else if(m==='xf'){add(mk('xf',Math.sqrt(Z0/RL)));add(ser(-XL))}
+else if(m==='qw'){add(mk('tl',90,Math.sqrt(Z0*RL)));add(ser(-XL))}
+else if(m==='bin'||m==='cheb'){let Zp=Z0,c=1;for(let k=0;k<N;k++){if(k>0)c=c*(N-k+1)/k;Zp*=Math.exp(Math.pow(2,-N)*c*Math.log(RL/Z0));add(mk('tl',90,Zp))}add(ser(-XL));if(m==='cheb')msg.push('Starts from the binomial design and optimizes Zc and length over the band for an equal-ripple-like response.')}
+else{const L=+$('TL').value||1,Ns=Math.max(2,N);for(let k=0;k<Ns;k++){const s=(k+.5)/Ns;add(mk('tl',L*360/Ns,m==='texp'?Z0*Math.pow(RL/Z0,s):Z0+(RL-Z0)*s))}add(ser(-XL));msg.push('Taper of '+Ns+' equal slices, total length '+L+' λ at f0.')}
+net=n;cur=0;$('mp').checked=!band;if(m!=='lsec'&&!band&&m!=='cheb')msg.push('Exact at f0 for the load impedance at f0 (reactance cancelled by a series element).');
+if(opt){optimize();msg.push('Optimized over '+g4(F1/UN)+'–'+g4(F2/UN)+' '+$('fu').selectedOptions[0].text+'.')}
+$('msg').textContent=msg.join(' ');upd()}
+function optimize(){rd();const fs=[],zls=[];for(let i=0;i<=40;i++){const f=F1+(F2-F1)*i/40;fs.push(f);zls.push(ZL(f))}
+const vs=[];net.forEach((e,k)=>{vs.push([k,'v']);if(e.z!==undefined)vs.push([k,'z'])});
+const cost=()=>{let c=0;for(let i=0;i<fs.length;i++)c+=Math.pow(mg(gam(zin(fs[i],net,zls[i]))),4);return c};
+let best=cost(),st=.2;for(let it=0;it<250&&st>1e-3;it++){let imp=false;for(const[k,key]of vs)for(const d of[1,-1]){const o=net[k][key];net[k][key]=o*(1+d*st);const c=cost();if(c<best){best=c;imp=true}else net[k][key]=o}if(!imp)st/=2}}
+/* schematic */
+function sym(t){if(t==='sC'||t==='pC')return'<path d="M-30 0H-4M-4-11V11M4-11V11M4 0H30"/>';
+if(t==='sL'||t==='pL')return'<path d="M-30 0H-16a4 4 0 0 1 8 0a4 4 0 0 1 8 0a4 4 0 0 1 8 0a4 4 0 0 1 8 0H30"/>';
+if(t==='sR'||t==='pR')return'<polyline points="-30,0 -20,0 -16,-8 -8,8 0,-8 8,8 16,-8 20,0 30,0"/>';
+if(t==='xf')return'<path d="M-30 0H-14M14 0H30"/><circle cx="-7" cy="0" r="10"/><circle cx="7" cy="0" r="10"/>';
+return'<path d="M-30 0H-26M26 0H30"/><rect x="-26" y="-10" width="52" height="20"/>'}
+const gnd=x=>`<path d="M${x} 160v7M${x-9} 167h18M${x-5} 171h10M${x-2} 175h4"/>`;
+const vstr=e=>e.z!==undefined&&e.t!=='xf'?`${g3(e.z)}Ω ${g3(e.v)}°`:e.t==='xf'?g3(e.v)+':1':g3(e.v/T[e.t][2])+T[e.t][1];
+function schem(){const n=net.length,W=n*100+160,bus=60,gy=160,cvr='style="fill:var(--card);stroke:none"';
+let s=`<line x1="30" y1="${bus}" x2="${W-30}" y2="${bus}"/><polyline points="30,${bus} 30,${bus+22} 22,${bus+30} 38,${bus+46} 22,${bus+62} 38,${bus+78} 30,${bus+86} 30,${gy}"/>${gnd(30)}<text x="30" y="${gy+30}">Zs ${g4(Z0)}Ω</text>
+<line x1="${W-30}" y1="${bus}" x2="${W-30}" y2="${bus+30}"/><rect x="${W-44}" y="${bus+30}" width="28" height="56"/><line x1="${W-30}" y1="${bus+86}" x2="${W-30}" y2="${gy}"/>${gnd(W-30)}<text x="${W-30}" y="${gy+30}">ZL</text>`;
+net.forEach((e,i)=>{const cx=130+i*100,sh=isSh(e.t),lab=T[e.t][3]+(i+1);
+ if(i===cur)s+=`<rect x="${cx-46}" y="8" width="92" height="${gy+58}" rx="4" style="stroke:var(--primary);fill:rgba(13,110,253,.12)"/>`;
+ if(sh){s+=`<circle cx="${cx}" cy="${bus}" r="2.6" style="fill:var(--ink)"/><line x1="${cx}" y1="${bus}" x2="${cx}" y2="${gy}"/><g transform="translate(${cx},110) rotate(90)"><rect x="-32" y="-14" width="64" height="28" ${cvr}/>${sym(e.t)}</g>${gnd(cx)}<text x="${cx}" y="${gy+32}">${lab}</text><text class="m" x="${cx}" y="${gy+45}">${vstr(e)}</text>`}
+ else s+=`<g transform="translate(${cx},${bus})"><rect x="-32" y="-14" width="64" height="28" ${cvr}/>${sym(e.t)}</g><text x="${cx}" y="${bus-34}">${lab}</text><text class="m" x="${cx}" y="${bus-21}">${vstr(e)}</text>`;
+ s+=`<rect data-i="${i}" x="${cx-46}" y="8" width="92" height="${gy+58}" style="fill:transparent;stroke:none;cursor:pointer"/>`});
+if(!n)s+=`<text x="${W/2}" y="40">No components – add one or press Match</text>`;
+$('sv').setAttribute('width',W);$('sv').innerHTML=s;const v=$('schv');if(n){const cx=130+cur*100;if(cx-60<v.scrollLeft||cx+60>v.scrollLeft+v.clientWidth)v.scrollLeft=cx-v.clientWidth/2}}
+$('sv').addEventListener('click',e=>{const t=e.target.closest('[data-i]');if(t){cur=+t.dataset.i;upd();$('sv').focus()}});
+/* inspector */
+function insp(){const e=net[cur];$('ev').disabled=$('ez').disabled=!e;$('ezr').hidden=!(e&&e.z!==undefined&&e.t!=='xf');
+if(!e){$('en').textContent='No component selected';$('ev').value='';return}
+$('en').textContent=`${T[e.t][3]}${cur+1}: ${T[e.t][0]} (${cur+1}/${net.length}, source → load)`;$('ev').value=+(e.v/T[e.t][2]).toPrecision(6);$('evu').textContent=T[e.t][1];$('evl').textContent=e.t==='xf'?'Ratio n':e.z!==undefined?'Electrical length at f0':'Value';if(e.z!==undefined)$('ez').value=+e.z.toPrecision(6)}
+$('ev').addEventListener('input',()=>{const e=net[cur],v=+$('ev').value;if(e&&v>0){e.v=v*T[e.t][2];upd(1)}});
+$('ez').addEventListener('input',()=>{const e=net[cur],v=+$('ez').value;if(e&&v>0){e.z=v;upd(1)}});
+function bump(d,m){const e=net[cur];if(!e)return;e.v*=1+d*m;upd()}
+const mv=d=>{if(net.length){cur=(cur+d+net.length)%net.length;upd()}};
+$('bl').onclick=()=>mv(-1);$('br').onclick=()=>mv(1);$('bu').onclick=()=>bump(1,.02);$('bd').onclick=()=>bump(-1,.02);
+document.addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;const m=e.shiftKey?.1:e.altKey?.005:.02;
+if(e.key==='ArrowLeft')mv(-1);else if(e.key==='ArrowRight')mv(1);else if(e.key==='ArrowUp')bump(1,m);else if(e.key==='ArrowDown')bump(-1,m);else if(e.key==='Delete')$('del').click();else return;e.preventDefault()});
+$('add').onclick=()=>{rd();const t=$('addt').value,w=2*PI*F0,v={sL:Z0/w,sC:1/(w*Z0),sR:Z0,pL:Z0/w,pC:1/(w*Z0),pR:Z0,tl:90,os:45,ss:45,xf:1}[t],e={t,v};if('tl os ss'.includes(t))e.z=Z0;const at=net.length?cur+1:0;net.splice(at,0,e);cur=at;upd()};
+$('del').onclick=()=>{if(net.length){net.splice(cur,1);cur=Math.max(0,Math.min(cur,net.length-1));upd()}};
+$('clr').onclick=()=>{net=[];cur=0;$('msg').textContent='';upd()};
+$('apply').onclick=match;$('optb').onclick=()=>{if(net.length){optimize();$('msg').textContent='Optimized all component values over the band.';upd()}};
+/* charts */
+function smith(){const cv=$('smith'),S=Math.max(260,Math.min(440,cv.parentElement.clientWidth-8)),dpr=devicePixelRatio||1;cv.style.width=cv.style.height=S+'px';cv.width=cv.height=S*dpr;const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
+const c=S/2,R=c-10,mu=V('--muted'),P=g=>[c+R*g[0],c-R*g[1]];x.fillStyle=V('--card');x.fillRect(0,0,S,S);
+x.save();x.beginPath();x.arc(c,c,R,0,2*PI);x.clip();x.strokeStyle=V('--grid');x.lineWidth=1;
+if($('zg').checked){for(const r of[0,.2,.5,1,2,5]){x.beginPath();x.arc(c+R*r/(1+r),c,R/(1+r),0,2*PI);x.stroke()}
+for(const q of[.2,.5,1,2,5])for(const s of[1,-1]){x.beginPath();x.arc(c+R,c-s*R/q,R/q,0,2*PI);x.stroke()}}
+if($('yg').checked){x.strokeStyle='rgba(253,126,20,.45)';for(const r of[0,.2,.5,1,2,5]){x.beginPath();x.arc(c-R*r/(1+r),c,R/(1+r),0,2*PI);x.stroke()}
+for(const q of[.2,.5,1,2,5])for(const s of[1,-1]){x.beginPath();x.arc(c-R,c-s*R/q,R/q,0,2*PI);x.stroke()}}
+x.beginPath();x.moveTo(c-R,c);x.lineTo(c+R,c);x.stroke();x.restore();x.strokeStyle=mu;x.beginPath();x.arc(c,c,R,0,2*PI);x.stroke();
+const tr=(A,col,d)=>{x.strokeStyle=col;x.lineWidth=2;x.setLineDash(d||[]);x.beginPath();A.forEach((g,i)=>{const p=P(g);i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1])});x.stroke();x.setLineDash([])};
+tr(D.GL,mu,[5,4]);tr(D.G,V('--c1'));
+const dot=(g,col,r)=>{const p=P(g);x.fillStyle=col;x.beginPath();x.arc(p[0],p[1],r,0,2*PI);x.fill()};
+if($('mp').checked){let Z=ZL(F0);const q=z=>P(gam(z)),lab=(z,t)=>{const p=q(z);x.font='11px system-ui';x.textAlign='left';x.fillStyle=V('--ink');x.fillText(t,p[0]+7,p[1]-6)};
+ x.setLineDash([]);x.lineWidth=2.5;
+ for(let k=net.length-1;k>=0;k--){const e=net[k],sh=isSh(e.t),Zs=Z,seg=[q(Zs)];
+  const st=t=>{if(e.t==='tl'||e.t==='xf')return zin(F0,[{...e,v:e.t==='xf'?1+(e.v-1)*t:e.v*t}],Zs);
+   if(sh){const Y=cd([1,0],zin(F0,[e],[1e15,0]));return cd([1,0],ca(cd([1,0],Zs),[Y[0]*t,Y[1]*t]))}
+   const Zl=zin(F0,[e],[0,0]);return ca(Zs,[Zl[0]*t,Zl[1]*t])};
+  for(let i=1;i<=40;i++)seg.push(q(st(i/40)));Z=zin(F0,[e],Zs);
+  x.strokeStyle=sh?'#a855f7':'#16a34a';x.beginPath();seg.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.stroke();
+  dot(gam(Z),sh?'#a855f7':'#16a34a',3.5);lab(Z,T[e.t][3]+(k+1))}
+ const zl0=ZL(F0),p0=q(zl0);x.fillStyle='#fd7e14';x.fillRect(p0[0]-5,p0[1]-5,10,10);lab(zl0,'ZL');
+ x.font='12px system-ui';x.textAlign='left';x.fillStyle='#16a34a';x.fillText('— series',8,64);x.fillStyle='#a855f7';x.fillText('— shunt',8,80);x.fillStyle='#fd7e14';x.fillText('■ load ZL',8,96)}
+dot(D.G[0],V('--c1'),3);dot(D.G[D.G.length-1],V('--c1'),3);dot(gam(zin(F0,net,ZL(F0))),V('--c2'),5);if(HV!==null)dot(D.G[HV],V('--ink'),4);
+x.font='12px system-ui';x.textAlign='left';x.fillStyle=V('--c1');x.fillText('● matched',8,16);x.fillStyle=mu;x.fillText('-- load only',8,32);x.fillStyle=V('--c2');x.fillText('● f0',8,48)}
+let GEO=null;
+function mag(){const cv=$('mag'),W=Math.max(280,cv.parentElement.clientWidth-8),H=Math.min(440,Math.max(300,W*.9)),dpr=devicePixelRatio||1;cv.style.width=W+'px';cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
+const ml=44,mr=10,mt=10,mb=40,pw=W-ml-mr,ph=H-mt-mb,mu=V('--muted'),ink=V('--ink'),X=f=>ml+(f-FA)/(FB-FA)*pw,Y=d=>mt+(YX-Math.min(YX,Math.max(YM,d)))/(YX-YM)*ph;
+x.fillStyle=V('--card');x.fillRect(0,0,W,H);x.fillStyle='rgba(110,168,254,.13)';x.fillRect(X(F1),mt,X(F2)-X(F1),ph);
+x.font='12px system-ui';x.strokeStyle=V('--grid');x.lineWidth=1;x.fillStyle=mu;x.textAlign='right';x.textBaseline='middle';
+for(let d=YX;d>=YM-1e-9;d-=YS){const y=Math.round(Y(d))+.5;x.beginPath();x.moveTo(ml,y);x.lineTo(ml+pw,y);x.stroke();x.fillText(+d.toFixed(2),ml-6,y)}
+x.textAlign='center';x.textBaseline='top';for(let i=0;i<=XT;i++){const f=FA+(FB-FA)*i/XT,xx=Math.round(X(f))+.5;x.beginPath();x.moveTo(xx,mt);x.lineTo(xx,mt+ph);x.stroke();x.fillText(g3(f/UN),xx,mt+ph+5)}
+x.fillStyle=ink;x.fillText('Frequency ('+$('fu').selectedOptions[0].text+')',ml+pw/2,H-16);
+x.save();x.beginPath();x.rect(ml,mt,pw,ph);x.clip();const tr=(A,col,d)=>{x.strokeStyle=col;x.lineWidth=2;x.setLineDash(d||[]);x.beginPath();A.forEach((g,i)=>{const px=X(D.fr[i]),py=Y(db(g));i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();x.setLineDash([])};
+tr(D.GL,mu,[5,4]);tr(D.G,V('--c2'));x.restore();GEO={ml,pw,n:D.fr.length};
+if(HV!==null){const xx=X(D.fr[HV]);x.strokeStyle=mu;x.setLineDash([3,3]);x.beginPath();x.moveTo(xx,mt);x.lineTo(xx,mt+ph);x.stroke();x.setLineDash([]);x.textAlign='left';x.textBaseline='top';x.fillStyle=ink;
+x.fillText(`${g4(D.fr[HV]/UN)}  S11 ${db(D.G[HV]).toFixed(1)} dB`,Math.min(xx+6,ml+pw-150),mt+4)}}
+function hov(e){if(!GEO||!D)return;const r=$('mag').getBoundingClientRect(),i=Math.round((e.clientX-r.left-GEO.ml)/GEO.pw*(GEO.n-1));HV=i<0||i>=GEO.n?null:i;smith();mag()}
+$('mag').addEventListener('pointermove',hov);$('mag').addEventListener('pointerdown',hov);$('mag').addEventListener('pointerleave',()=>{HV=null;smith();mag()});
+function summ(){const z=zin(F0,net,ZL(F0)),g=gam(z),sw=(1+mg(g))/Math.max(1e-9,1-mg(g));let w=-1e9,a=0;for(let i=0;i<=40;i++){const f=F1+(F2-F1)*i/40,d=db(gam(zin(f,net,ZL(f))));w=Math.max(w,d);a+=d/41}
+$('sum').innerHTML=[['Zin at f0',`${g4(z[0])} ${z[1]<0?'−':'+'} j${g4(Math.abs(z[1]))} Ω`],['S11 at f0',db(g).toFixed(2)+' dB'],['VSWR at f0',mg(g)>.9995?'∞':sw.toFixed(2)],['Band worst S11',w.toFixed(2)+' dB'],['Band mean S11',a.toFixed(2)+' dB']].map(a=>`<div><dt>${a[0]}</dt><dd>${a[1]}</dd></div>`).join('')}
+
+/* export */
+const hasTL=()=>net.some(e=>e.t==='tl'||e.t==='os'||e.t==='ss'),hasLC=()=>net.some(e=>['sL','sC','pL','pC'].includes(e.t));
+function exState(){const ok=hasTL()&&hasLC();$('exm').disabled=!ok;$('exh').textContent=ok?'':'EMerge export needs at least one transmission line or stub and one inductor or capacitor.'}
+function qucsTxt(){rd();const C0=299792458,BY=200,SP=80,w0=2*PI*F0;
+const qv=(v,u)=>{const P=[[1e-15,'f'],[1e-12,'p'],[1e-9,'n'],[1e-6,'u'],[1e-3,'m'],[1,''],[1e3,'k'],[1e6,'M'],[1e9,'G']];let c=P[0];for(const x of P)if(Math.abs(v)>=x[0]*.99995)c=x;return `${+(v/c[0]).toFixed(3)} ${c[1]}${u}`};
+const lum=(t,n,v)=>t==='L'?{y:'L',n,p:[[qv(v,'H'),1],['',0]]}:t==='C'?{y:'C',n,p:[[qv(v,'F'),1],['',0],['neutral',0]]}:{y:'R',n,p:[[qv(v,'Ohm'),1],['26.85',0],['0.0',0],['0.0',0],['26.85',0],['US',0]]};
+const se=[],sh=[];let nd=0;
+net.forEach((e,i)=>{const n=T[e.t][3]+(i+1),k=e.t;let el;
+ if(k==='tl'||k==='os'||k==='ss')el={y:'TLIN',n,open:k==='os',p:[[g4(e.z)+' Ohm',1],[qv(e.v/360*C0/F0,'m'),1],['0 dB',0],['26.85',0]]};
+ else if(k==='xf')el={y:'Tr',n,p:[[String(g4(e.v)),1]]};
+ else el=lum(k[1],n,e.v);
+ if(isSh(k))(sh[nd]=sh[nd]||[]).push(el);else{se[nd]=el;nd++}});
+const zl=ZL(F0),ch=[lum('R','RL',Math.max(zl[0],1e-3))];if(Math.abs(zl[1])>1e-9)ch.push(zl[1]>0?lum('L','LL',zl[1]/w0):lum('C','CL',-1/(w0*zl[1])));
+sh[0]=[{y:'Pac',n:'P1',p:[['1',1],[Z0+' Ohm',1],['0 dBm',0],['1 GHz',0],['26.85',0],['26.85',0],['true',0],['false',0]]},...(sh[0]||[])];sh[nd]=[...(sh[nd]||[]),{ch}];
+const xs=[],re=[],Cm=[],Wr=[],Pt=[];let x=120;
+for(let i=0;i<=nd;i++){xs[i]=x;re[i]=x+(Math.max((sh[i]||[]).length,1)-1)*SP;x=re[i]+120}
+const wire=(a,b,c,d)=>{if(a!==c||b!==d)Wr.push(`<${a} ${b} ${c} ${d} "" 0 0 0 "">`)};
+const comp=(y,n,cx,cy,tx,ty,r,p)=>Cm.push(`<${y} ${n} 1 ${cx} ${cy} ${tx} ${ty} 0 ${r} ${p.map(q=>`"${q[0]}" ${q[1]}`).join(' ')}>`);
+const gd=(a,b)=>Cm.push(`<GND * 1 ${a} ${b} 0 0 0 0>`);
+for(let i=0;i<=nd;i++){
+ (sh[i]||[]).forEach((el,j)=>{const sx=xs[i]+j*SP;if(j>0)wire(sx-SP,BY,sx,BY);wire(sx,BY,sx,BY+30);
+  if(el.ch){el.ch.forEach((c,k)=>comp(c.y,c.n,sx,BY+60+60*k,14,-14,1,c.p));gd(sx,BY+30+60*el.ch.length);
+   const y0=BY+15,y1=BY+60+60*el.ch.length;Pt.push(`<Rectangle ${sx-35} ${y0} 220 ${y1-y0} #000000 0 3 #c0c0c0 1 0>`,`<Text ${sx-30} ${y1+8} 12 #000000 0 "Equivalent load at f0: ZL = ${g4(zl[0])} ${zl[1]<0?'-':'+'} j${g4(Math.abs(zl[1]))} Ohm">`)}
+  else{comp(el.y,el.n,sx,BY+60,-26,55,1,el.p);if(!el.open)gd(sx,BY+90)}});
+ if(i<nd){const e=se[i],cx=re[i]+60;wire(re[i],BY,cx-30,BY);
+  if(e.y==='Tr'){comp('Tr',e.n,cx,BY+30,-14,-77,0,e.p);gd(cx-30,BY+60);gd(cx+30,BY+60)}else comp(e.y,e.n,cx,BY,-26,e.y==='TLIN'?-62:-45,0,e.p);
+  wire(cx+30,BY,xs[i+1],BY)}}
+const SY=BY+300,X0=xs[0],ex=xs[nd]+(sh[nd].length-1)*SP+250,Dg=[];
+Cm.push(`<.SP SP1 1 ${X0} ${SY} 0 56 0 0 "lin" 1 "${qv(FA,'Hz')}" 1 "${qv(FB,'Hz')}" 1 "${NP}" 1 "no" 0 "1" 0 "2" 0 "yes" 0 "no" 0>`);
+Cm.push(`<Eqn Eqn1 1 ${X0+170} ${SY+10} -28 15 0 0 "S11_dB=dB(S[1,1])" 1 "yes" 0>`);
+const DX=Math.max(X0+610,ex),nm=v=>+v.toPrecision(6);
+Dg.push(`<Smith ${DX} ${SY-140} 200 200 3 #c0c0c0 1 00 1 0 1 1 1 0 4 1 1 0 1 1 315 0 225 1 0 0 "" "" "">\n\t<"S[1,1]" #0000ff 1 3 0 0 0 0>\n\t  <Mkr ${F0.toExponential(3)} 161 -157 3 0 0>\n  </Smith>`,`<Rect ${DX-10} ${SY+60} 240 160 3 #c0c0c0 1 00 1 ${nm(FA)} ${nm((FB-FA)/XT)} ${nm(FB)} 0 ${YM} ${YS} ${YX} 1 -1 1 1 315 0 225 1 0 0 "" "" "">\n\t<"S11_dB" #0000ff 1 3 0 0 0 0>\n  </Rect>`);
+return `<Qucs Schematic 26.1.1>\n<Components>\n${Cm.join('\n')}\n</Components>\n<Wires>\n${Wr.join('\n')}\n</Wires>\n<Diagrams>\n${Dg.join('\n')}\n</Diagrams>\n<Paintings>\n${Pt.join('\n')}\n</Paintings>\n`}
+function emTxt(){rd();const rows=net.map((e,i)=>`    dict(kind='${e.t}', value=${e.v}${e.z!==undefined?`, z0=${e.z}`:''}),  # ${T[e.t][3]}${i+1}${e.z!==undefined?' (value = electrical length in degrees at F0)':''}`).join('\n');
+return `# EMerge scaffold generated by RF Design Tools (Impedance Matching)
+# Elements are listed source -> load. Microstrip widths/lengths are computed below (Hammerstad).
+# The EMerge geometry/port/solve calls are NOT filled in: complete the hooks in build() using the
+# EMerge manual (https://www.emerge-software.com/resources) for your installed version.
+import numpy as np
+import emerge as em
+
+mm = 0.001
+Z0, F0, FA, FB, NP = ${Z0}, ${F0}, ${FA}, ${FB}, ${NP}
+ER, H = 4.4, 1.6*mm        # substrate permittivity / height: edit
+ELEMS = [
+${rows}
+]
+
+def ms_width(z, er=ER, h=H):
+    A = z/60*np.sqrt((er+1)/2) + (er-1)/(er+1)*(0.23+0.11/er)
+    w = 8*np.exp(A)/(np.exp(2*A)-2)
+    if w > 2:
+        B = 377*np.pi/(2*z*np.sqrt(er))
+        w = 2/np.pi*(B-1-np.log(2*B-1)+(er-1)/(2*er)*(np.log(B-1)+0.39-0.61/er))
+    return w*h
+
+def ms_eeff(w, er=ER, h=H):
+    return (er+1)/2 + (er-1)/2/np.sqrt(1+12*h/w)
+
+def ms_length(el):
+    w = ms_width(el['z0'])
+    return el['value']/360*299792458/F0/np.sqrt(ms_eeff(w))
+
+def build(model):
+    # TODO: create the substrate/PCB and the 50-ohm feed lines with ports (width ms_width(Z0)).
+    for el in ELEMS:
+        k = el['kind']
+        if k == 'tl':      raise NotImplementedError('series microstrip: width ms_width(z0), length ms_length(el)')
+        elif k in ('sL','sC','sR'): raise NotImplementedError('series lumped element in a trace gap')
+        elif k in ('pL','pC','pR'): raise NotImplementedError('shunt lumped element to ground')
+        elif k in ('os','ss'):      raise NotImplementedError('stub (open / shorted with via), length ms_length(el)')
+        else:              raise NotImplementedError('ideal transformer has no PCB equivalent')
+
+if __name__ == '__main__':
+    for el in ELEMS:
+        if 'z0' in el:
+            print(el['kind'], 'W = %.3f mm' % (ms_width(el['z0'])/mm), 'L = %.3f mm' % (ms_length(el)/mm))
+    model = em.Simulation('matching_network')
+    build(model)
+`}
+let exM='';
+const EX={q:()=>['Qucs-S schematic (open with File → Open in Qucs-S)',qucsTxt(),'matching.sch','Lossless export. Transmission lines use free-space length (eeff = 1). The load is exported as R in series with L or C evaluated at f0, inside a dotted rectangle (s1p loads are not embedded). A lin S-parameter sweep over the current sweep range is included; plot S11_dB after simulating. Ideal transformers use the Qucs Tr component (check its orientation).'],
+ m:()=>['EMerge Python scaffold',emTxt(),'matching_emerge.py','Scaffold only: it lists the network with computed microstrip dimensions; the EMerge geometry and solver calls must be completed by you.']};
+function show(m,sc){exM=m;const[t,txt,fn,note]=EX[m]();$('exT').textContent=t;$('exA').value=txt;const a=$('exL');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(txt);a.download=fn;$('exN').textContent=note;$('exC').hidden=false;if(sc)$('exC').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function exRefresh(){if($('exC').hidden||!exM)return;if(exM==='m'&&$('exm').disabled){$('exC').hidden=true;return}show(exM,0)}
+$('exq').onclick=()=>show('q',1);
+$('exm').onclick=()=>{if(!$('exm').disabled)show('m',1)};
+$('exCp').onclick=async()=>{const t=$('exA');t.focus();t.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}if(!ok){try{await navigator.clipboard.writeText(t.value);ok=true}catch(_){}}$('exCp').textContent=ok?'Copied':'Press Ctrl+C';setTimeout(()=>$('exCp').textContent='Copy text',2000)};
+/* main */
+let pend=0;function upd(noI){rd();document.querySelectorAll('.ck').forEach(r=>r.hidden=$('lm').value==='s');document.querySelectorAll('.cs').forEach(r=>r.hidden=$('lm').value!=='s');
+const er=[];if(!(F2>F1&&F1>0))er.push('Band stop must be above band start (both positive).');if(!(FB>FA&&FA>0))er.push('Sweep stop must be above sweep start (both positive).');if(!(F0>0))er.push('f0 must be positive.');
+$('alert').hidden=!er.length;$('alert').innerHTML=er.join('<br>');if(er.length)return;
+const fr=[],G=[],GL=[];for(let i=0;i<NP;i++){const f=FA+(FB-FA)*i/(NP-1),zl=ZL(f);fr.push(f);G.push(gam(zin(f,net,zl)));GL.push(gam(zl))}
+D={fr,G,GL};HV=null;schem();if(!noI)insp();smith();mag();summ();exState();exRefresh()}
+let pu=1e9;$('fu').addEventListener('change',()=>{const nu=+$('fu').value;['f0','f1','f2','fa','fb'].forEach(i=>$(i).value=+(+$(i).value*pu/nu).toPrecision(6));pu=nu;upd()});
+$('lf').addEventListener('input',()=>{if(pend)return;pend=1;requestAnimationFrame(()=>{pend=0;upd()})});
+$('lm').addEventListener('change',upd);
+new ResizeObserver(()=>{if(D){smith();mag()}}).observe($('ch'));
+match();
+})();
+</script></body></html>
