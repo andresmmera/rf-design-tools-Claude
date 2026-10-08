@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>S2P report</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>html{scroll-padding-top:env(safe-area-inset-top,0px);background:#e9edf1}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme: dark){html:not([data-theme="light"]){background:#0f151b}}
+html[data-theme="dark"]{background:#0f151b}
+body{margin:0}</style>
+</head>
+<body>
+<div id="s2-app"></div>
+<script>
+(function(){
+const PARTS = {"css": "#s2-app{--s2-bg:#e9edf1;--s2-panel:#f6f7f9;--s2-ink:#12202e;--s2-muted:#5a6b7b;--s2-line:#cbd4dd;--s2-accent:#0f5b73;--s2-accent-ink:#ffffff;--s2-field:#ffffff;--s2-warn:#a4261a;container-type:inline-size;text-align:left}\n@media (prefers-color-scheme: dark){:root:not([data-theme=\"light\"]) #s2-app{--s2-bg:#0f151b;--s2-panel:#17202a;--s2-ink:#e6edf3;--s2-muted:#93a3b3;--s2-line:#2b3845;--s2-accent:#5cc0dc;--s2-accent-ink:#06222b;--s2-field:#101820;--s2-warn:#ff8f80}}\n:root[data-theme=\"dark\"] #s2-app{--s2-bg:#0f151b;--s2-panel:#17202a;--s2-ink:#e6edf3;--s2-muted:#93a3b3;--s2-line:#2b3845;--s2-accent:#5cc0dc;--s2-accent-ink:#06222b;--s2-field:#101820;--s2-warn:#ff8f80}\n#s2-app label{margin:0;display:inline-block;font-weight:inherit;max-width:none}\n#s2-app h1,#s2-app h2{line-height:1.25;color:inherit}\n#s2-app input,#s2-app select,#s2-app button{margin:0;box-shadow:none}\n#s2-app .s2-sgrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}\n#s2-app .s2-sblk,#s2-app .s2-row{min-width:0}\n#s2-app .s2-row{margin-left:0;margin-right:0;flex-wrap:nowrap}\n#s2-app .s2-row>*{width:auto;max-width:none;padding-left:0;padding-right:0}\n#s2-app .s2-row>input[type=number]{padding:0 8px}\n#s2-app .s2-row>.s2-lab{flex:none}\n#s2-app .s2-chk{flex:1 1 auto;min-width:0}\n#s2-app input[type=color]{flex:none;padding:2px}\n#s2-app .s2-xbox{flex:1 1 100%;font-size:13px;color:var(--s2-muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}\n#s2-app .s2-xbox a{color:var(--s2-accent);font-weight:600}\n#s2-app *,#s2-app *::before,#s2-app *::after{box-sizing:border-box}\n#s2-app{margin:0;background:var(--s2-bg);color:var(--s2-ink);font:14px/1.45 \"Instrument Sans\",system-ui,-apple-system,\"Segoe UI\",sans-serif;min-height:100%}\n#s2-app h1,#s2-app h2{margin:0;font-weight:600}\n#s2-app h1{font-size:19px;letter-spacing:-.01em}\n#s2-app h2{font-size:15px}\n#s2-app button,#s2-app input,#s2-app select{font:inherit;color:inherit}\n#s2-app :focus-visible{outline:2px solid var(--s2-accent);outline-offset:2px}\n#s2-app .s2-top{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--s2-panel);border-bottom:1px solid var(--s2-line)}\n#s2-app .s2-top .s2-sub{color:var(--s2-muted);font-size:13px;margin-top:2px}\n#s2-app .s2-actions{display:flex;gap:8px;flex-wrap:wrap}\n#s2-app .s2-btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:7px;border:1px solid var(--s2-line);background:var(--s2-field);cursor:pointer;font-weight:500;white-space:nowrap}\n#s2-app .s2-btn:hover{border-color:var(--s2-accent)}\n#s2-app .s2-btn.s2-primary{background:var(--s2-accent);color:var(--s2-accent-ink);border-color:var(--s2-accent)}\n#s2-app .s2-btn.s2-small{height:28px;padding:0 10px;font-size:13px}\n#s2-app .s2-btn[hidden]{display:none}\n#s2-app .s2-layout{display:grid;grid-template-columns:minmax(300px,370px) minmax(0,1fr);gap:16px;padding:16px;align-items:start}\n#s2-app .s2-side{background:var(--s2-panel);border:1px solid var(--s2-line);border-radius:10px;}\n#s2-app .s2-grp{padding:14px 16px;border-top:1px solid var(--s2-line)}\n#s2-app .s2-grp:first-child{border-top:0}\n#s2-app .s2-grp h2{margin-bottom:10px}\n#s2-app .s2-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}\n#s2-app .s2-row:last-child{margin-bottom:0}\n#s2-app .s2-row>label.s2-lab{width:62px;color:var(--s2-muted);flex:none}\n#s2-app input[type=number],#s2-app select{height:32px;border:1px solid var(--s2-line);background:var(--s2-field);border-radius:6px;padding:0 8px;min-width:0}\n#s2-app input[type=number]{flex:1 1 90px;font-variant-numeric:tabular-nums}\n#s2-app select{flex:0 0 auto}\n#s2-app input[type=color]{width:34px;height:28px;padding:2px;border:1px solid var(--s2-line);border-radius:6px;background:var(--s2-field);cursor:pointer}\n#s2-app input[type=checkbox]{width:16px;height:16px;accent-color:var(--s2-accent)}\n#s2-app input:disabled{opacity:.5}\n#s2-app .s2-chk{display:flex;align-items:center;gap:8px;flex:1}\n#s2-app .s2-mname{width:30px;font-weight:600;color:var(--s2-muted)}\n#s2-app .s2-icon{width:30px;height:30px;border:1px solid var(--s2-line);border-radius:6px;background:var(--s2-field);cursor:pointer;line-height:1;font-size:17px;color:var(--s2-muted)}\n#s2-app .s2-icon:hover{color:var(--s2-warn);border-color:var(--s2-warn)}\n#s2-app .s2-hintline{color:var(--s2-muted);font-size:12.5px;margin:6px 0 0}\n#s2-app .s2-drop{border:1.5px dashed var(--s2-line);border-radius:8px;padding:10px 12px;color:var(--s2-muted);font-size:13px}\n#s2-app .s2-drop.s2-over{border-color:var(--s2-accent);color:var(--s2-ink)}\n#s2-app .s2-drop strong{color:var(--s2-ink);font-weight:600;word-break:break-all}\n#s2-app #msg{color:var(--s2-warn);margin:8px 0 0;font-size:13px}\n#s2-app #figs{display:flex;flex-direction:column;gap:16px}\n#s2-app #figs[hidden]{display:none}\n#s2-app main{min-width:0;display:flex;flex-direction:column;gap:16px}\n#s2-app .s2-fig{margin:0;background:var(--s2-panel);border:1px solid var(--s2-line);border-radius:10px;padding:14px 16px}\n#s2-app .s2-fig>header{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;justify-content:space-between;margin-bottom:10px}\n#s2-app .s2-fig .s2-meta{color:var(--s2-muted);font-size:13px}\n#s2-app .s2-plot{background:#fff;border:1px solid var(--s2-line);border-radius:8px;overflow:hidden}\n#s2-app .s2-plot svg{display:block;width:100%;height:auto}\n#s2-app .s2-smithwrap{max-width:580px;margin:0 auto}\n#s2-app .s2-readout{min-height:22px;margin-top:8px;font-size:13px;color:var(--s2-muted);font-variant-numeric:tabular-nums;display:flex;flex-wrap:wrap;gap:2px 14px}\n#s2-app .s2-readout b{color:var(--s2-ink);font-weight:600}\n#s2-app .s2-key{display:inline-flex;align-items:center;gap:6px;margin-right:12px}\n#s2-app .s2-key i{display:inline-block;width:16px;height:3px;border-radius:2px}\n#s2-app .s2-legend{margin-top:10px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 0}\n#s2-app .s2-frow{display:flex;align-items:center;gap:6px;margin-top:10px}\n#s2-app .s2-fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}\n#s2-app .s2-fn small{display:block;color:var(--s2-muted);font-weight:400;font-size:12px;overflow:hidden;text-overflow:ellipsis}\n#s2-app .s2-frow select{height:30px;font-size:13px}\n#s2-app .s2-hint{margin:8px 0 0;font-size:12.5px;color:var(--s2-muted)}\n#s2-app .s2-tabwrap{overflow-x:auto}\n#s2-app table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}\n#s2-app th,#s2-app td{padding:7px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--s2-line)}\n#s2-app th{font-weight:600;color:var(--s2-muted);font-size:13px}\n#s2-app tr:last-child td{border-bottom:0}\n#s2-app .s2-empty{background:var(--s2-panel);border:1.5px dashed var(--s2-line);border-radius:10px;padding:48px 24px;text-align:center;color:var(--s2-muted)}\n#s2-app .s2-empty h2{color:var(--s2-ink);font-size:17px;margin-bottom:6px}\n#s2-app .s2-empty .s2-actions{justify-content:center;margin-top:16px}\n#s2-app .s2-note{color:var(--s2-muted);padding:26px 10px;text-align:center}\n@media (max-width:900px){#s2-app .s2-layout{grid-template-columns:minmax(0,1fr);padding:12px}\n#s2-app .s2-side{position:static;max-height:none}\n}\n@media print{#s2-app .s2-side,#s2-app .s2-top .s2-actions{display:none}\n#s2-app .s2-layout{display:block}\n}\n#s2-app .s2-toolbar{display:flex;gap:8px;flex-wrap:wrap}\n#s2-app #plots{display:flex;flex-direction:column;gap:16px}\n#s2-app .s2-ttl{font:inherit;font-weight:600;font-size:15px;border:1px solid transparent;background:transparent;border-radius:6px;padding:3px 6px;min-width:0;flex:1 1 160px;color:var(--s2-ink)}\n#s2-app .s2-ttl:hover,#s2-app .s2-ttl:focus{border-color:var(--s2-line);background:var(--s2-field)}\n#s2-app .s2-fig>header{align-items:center}\n#s2-app .s2-cbtns{display:flex;gap:6px;align-items:center}\n#s2-app details.settings{border:1px solid var(--s2-line);border-radius:8px;margin-bottom:12px;background:var(--s2-bg)}\n#s2-app details.settings>summary{cursor:pointer;padding:8px 12px;font-weight:500}\n#s2-app .s2-sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 24px;padding:4px 14px 14px}\n#s2-app .s2-sblk h3{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--s2-muted)}\n#s2-app .s2-sblk .s2-lab{width:84px}\n#s2-app .s2-sblk .s2-hintline{margin-top:4px}\n#s2-app .s2-legend:empty{display:none}\n@container (max-width:900px){#s2-app .s2-layout{grid-template-columns:minmax(0,1fr);padding:12px}\n", "markup": "\u003cdiv class=\"s2-top\">\n  \u003cdiv>\n    \u003ch1>S2P report\u003c/h1>\n    \u003cdiv class=\"s2-sub\" id=\"s2-fileinfo\">Load one or more two-port Touchstone files to begin.\u003c/div>\n  \u003c/div>\n  \u003cdiv class=\"s2-actions\">\n    \u003clabel class=\"s2-btn s2-primary\" for=\"s2-file\">Open .s2p files\u003c/label>\n    \u003cinput id=\"s2-file\" type=\"file\" accept=\".s2p,.S2P,.txt,.ts\" multiple hidden>\n    \u003cbutton class=\"s2-btn\" id=\"s2-btnExample\" type=\"button\">Load examples\u003c/button>\n    \u003cbutton class=\"s2-btn\" id=\"s2-btnExport\" type=\"button\" disabled>Save interactive report\u003c/button>\n  \u003c/div>\n  \u003cdiv class=\"s2-xbox\" id=\"s2-xbox\" hidden>\u003c/div>\n\u003c/div>\n\n\u003cdiv class=\"s2-layout\">\n  \u003caside class=\"s2-side\" aria-label=\"Inputs\">\n    \u003csection class=\"s2-grp\">\n      \u003ch2>Touchstone files\u003c/h2>\n      \u003cdiv class=\"s2-drop\" id=\"s2-drop\">Drop one or more \u003cstrong>.s2p\u003c/strong> files here, or use Open .s2p files. Colors identify the S-parameter; the line style identifies the file.\u003c/div>\n      \u003cdiv id=\"s2-flist\">\u003c/div>\n      \u003cp id=\"s2-msg\" role=\"alert\" hidden>\u003c/p>\n    \u003c/section>\n\n    \u003csection class=\"s2-grp\">\n      \u003ch2>Marker frequencies\u003c/h2>\n      \u003cdiv id=\"s2-mrows\">\u003c/div>\n      \u003cdiv class=\"s2-row\" style=\"margin-top:8px\">\u003cbutton class=\"s2-btn s2-small\" id=\"s2-btnAddMarker\" type=\"button\">Add marker\u003c/button>\u003c/div>\n      \u003cp class=\"s2-hintline\">Markers are drawn on every plot whose span contains them. Drag a marker on a plot to move it.\u003c/p>\n    \u003c/section>\n  \u003c/aside>\n\n  \u003cmain>\n    \u003cdiv class=\"s2-empty\" id=\"s2-empty\">\n      \u003ch2>No data loaded\u003c/h2>\n      \u003cdiv>Open one or more two-port Touchstone files (.s2p) to build magnitude plots and Smith charts, each with its own span and axis settings.\u003c/div>\n      \u003cdiv class=\"s2-actions\">\n        \u003clabel class=\"s2-btn s2-primary\" for=\"s2-file\">Open .s2p files\u003c/label>\n        \u003cbutton class=\"s2-btn\" id=\"s2-btnExample2\" type=\"button\">Load examples\u003c/button>\n      \u003c/div>\n    \u003c/div>\n\n    \u003cdiv id=\"s2-figs\" hidden>\n      \u003cdiv class=\"s2-toolbar\">\n        \u003cbutton class=\"s2-btn\" id=\"s2-btnAddMag\" type=\"button\">+ Magnitude plot\u003c/button>\n        \u003cbutton class=\"s2-btn\" id=\"s2-btnAddSmith\" type=\"button\">+ Smith chart\u003c/button>\n      \u003c/div>\n      \u003cdiv id=\"s2-plots\">\u003c/div>\n      \u003cfigure class=\"s2-fig\" id=\"s2-figTab\">\n        \u003cheader>\u003ch2>Markers\u003c/h2>\u003cspan class=\"s2-meta\">Values come from the whole file, interpolated linearly\u003c/span>\u003c/header>\n        \u003cdiv class=\"s2-tabwrap\" id=\"s2-tabWrap\">\u003c/div>\n      \u003c/figure>\n    \u003c/div>\n  \u003c/main>\n\u003c/div>", "shell": "html{scroll-padding-top:env(safe-area-inset-top,0px);background:#e9edf1}\n:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}\n@media (prefers-color-scheme: dark){html:not([data-theme=\"light\"]){background:#0f151b}}\nhtml[data-theme=\"dark\"]{background:#0f151b}\nbody{margin:0}"};
+const EMBED = null;
+function s2main(root, PARTS, EMBED){
+'use strict';
+root.innerHTML = '<style>' + PARTS.css + '</style>' + PARTS.markup;
+const UN = {GHz:1e9, MHz:1e6, kHz:1e3};
+const TR = ['S21','S11','S22','S12'];
+const COL = {S21:'#e01b1b', S11:'#1d4ed8', S22:'#006400', S12:'#7c3aed'};
+const $ = id => root.querySelector('#s2-' + id);
+const st = {files:[], fid:0, markers:[], mid:0, plots:[], pid:0, nMag:0, nSmith:0};
+const DASHES = ['', '9 5', '2 4', '10 4 2 4'];
+const DASH_NAMES = ['Solid','Dashed','Dotted','Dash-dot'];
+const UNIT_OPTS = '<option>GHz</option><option>MHz</option><option>kHz</option>';
+const vis = () => st.files.filter(f => f.visible);
+function range(){
+  const L = vis().length ? vis() : st.files; let a = Infinity, b = -Infinity;
+  L.forEach(F => { a = Math.min(a, F.data.f[0]); b = Math.max(b, F.data.f[F.data.f.length-1]); });
+  return isFinite(a) ? [a, b] : [0, 1e9];
+}
+
+/* ---------- Touchstone parsing ---------- */
+function parseTouchstone(text){
+  let mult = 1e9, fmt = 'MA', z0 = 50;
+  const f = [], cols = Array.from({length:8}, () => []);
+  let buf = [];
+  for (const raw of text.split(/\r?\n/)){
+    const line = raw.split('!')[0].trim();
+    if (!line) continue;
+    if (line[0] === '#'){
+      const t = line.slice(1).trim().toUpperCase().split(/\s+/);
+      for (let i = 0; i < t.length; i++){
+        const s = t[i];
+        if (s === 'HZ') mult = 1; else if (s === 'KHZ') mult = 1e3;
+        else if (s === 'MHZ') mult = 1e6; else if (s === 'GHZ') mult = 1e9;
+        else if (s === 'DB' || s === 'MA' || s === 'RI') fmt = s;
+        else if (s === 'R'){ z0 = parseFloat(t[i+1]) || 50; i++; }
+        else if (['Y','Z','G','H'].includes(s)) throw new Error('This file holds ' + s + '-parameters. Only S-parameter files are supported.');
+      }
+      continue;
+    }
+    if (line[0] === '[') continue;
+    const nums = line.split(/[\s,]+/).map(Number);
+    if (nums.some(Number.isNaN)) continue;
+    if (!buf.length && nums.length === 5 && f.length) break;   // noise-data block
+    buf.push(...nums);
+    while (buf.length >= 9){
+      const fr = buf[0] * mult;
+      if (f.length && fr < f[f.length-1]) { buf = []; break; }
+      f.push(fr);
+      for (let k = 0; k < 4; k++){
+        const a = buf[1+2*k], b = buf[2+2*k];
+        let re, im;
+        if (fmt === 'RI'){ re = a; im = b; }
+        else {
+          const mag = fmt === 'DB' ? Math.pow(10, a/20) : a, ang = b*Math.PI/180;
+          re = mag*Math.cos(ang); im = mag*Math.sin(ang);
+        }
+        cols[2*k].push(re); cols[2*k+1].push(im);
+      }
+      buf = buf.slice(9);
+    }
+  }
+  if (f.length < 2) throw new Error('No S-parameter data found. Check that this is a two-port .s2p file.');
+  const mk = k => ({re:cols[2*k], im:cols[2*k+1]});
+  // two-port order: S11 S21 S12 S22
+  return {f, z0, S:{S11:mk(0), S21:mk(1), S12:mk(2), S22:mk(3)}};
+}
+
+function exampleText(f0 = 1.5){
+  const L = ['! Example two-port bandpass filter, centre ' + f0 + ' GHz (synthetic data)', '# GHz S RI R 50'];
+  const N = 600;
+  for (let i = 0; i <= N; i++){
+    const f = 0.01 + i*(3-0.01)/N, u = (f-f0)/0.35;
+    const rip = 1 - 0.05*Math.pow(Math.sin(2.4*u), 2)*(1/(1+u*u));
+    const a21 = 0.985*rip/Math.sqrt(1+Math.pow(u,6));
+    const a11 = Math.sqrt(Math.max(0, 1-a21*a21))*0.99;
+    const a22 = Math.sqrt(Math.max(0, 1-a21*a21))*0.97;
+    const p21 = -2*Math.PI*f*1.2 - 2.2*Math.atan(u);
+    const p11 = 0.6 - 2*Math.PI*0.45*f + 2*Math.atan(u);
+    const p22 = -0.9 - 2*Math.PI*0.38*f + 2*Math.atan(u);
+    const c = (m,p) => (m*Math.cos(p)).toExponential(6) + ' ' + (m*Math.sin(p)).toExponential(6);
+    L.push([f.toFixed(6), c(a11,p11), c(a21,p21), c(a21,p21), c(a22,p22)].join(' '));
+  }
+  return L.join('\n');
+}
+
+/* ---------- math helpers ---------- */
+const db = (re, im) => Math.max(20*Math.log10(Math.hypot(re, im) || 1e-12), -200);
+const deg = (re, im) => Math.atan2(im, re)*180/Math.PI;
+function lb(a, v){ let lo = 0, hi = a.length; while (lo < hi){ const m = (lo+hi)>>1; if (a[m] < v) lo = m+1; else hi = m; } return lo; }
+function ub(a, v){ let lo = 0, hi = a.length; while (lo < hi){ const m = (lo+hi)>>1; if (a[m] <= v) lo = m+1; else hi = m; } return lo; }
+function interp(F, name, fr){
+  const d = F.data, f = d.f;
+  if (fr < f[0] || fr > f[f.length-1]) return null;
+  const j = Math.min(Math.max(1, lb(f, fr)), f.length-1), i = j-1;
+  const t = (fr - f[i]) / ((f[j]-f[i]) || 1), s = d.S[name];
+  return {re: s.re[i] + t*(s.re[j]-s.re[i]), im: s.im[i] + t*(s.im[j]-s.im[i])};
+}
+function niceNum(r, round){
+  const e = Math.floor(Math.log10(r)), fr = r/Math.pow(10, e);
+  const nf = round ? (fr < 1.5 ? 1 : fr < 3 ? 2 : fr < 7 ? 5 : 10) : (fr <= 1 ? 1 : fr <= 2 ? 2 : fr <= 5 ? 5 : 10);
+  return nf*Math.pow(10, e);
+}
+const niceStep = (range, n) => niceNum(niceNum(range, false)/(n-1), true);
+const r10 = v => +v.toFixed(10);
+function decs(step){ let d = 0; while (d < 8 && Math.abs(step*Math.pow(10, d) - Math.round(step*Math.pow(10, d))) > 1e-9) d++; return d; }
+// Major ticks every `userStep` (blank = automatic), optional minor subdivisions
+function axisTicks(lo, hi, userStep, minorN, autoN){
+  let step = parseFloat(userStep);
+  if (!(step > 0) || (hi-lo)/step > 200) step = niceStep(hi-lo, autoN);
+  const major = [], minor = [];
+  for (let k = Math.ceil(lo/step - 1e-9); k <= Math.floor(hi/step + 1e-9); k++) major.push(r10(k*step));
+  const mn = Math.floor(parseFloat(minorN));
+  if (mn > 1 && mn <= 20 && (hi-lo)/(step/mn) <= 600){
+    const ms = step/mn;
+    for (let k = Math.ceil(lo/ms - 1e-9); k <= Math.floor(hi/ms + 1e-9); k++) if (k % mn !== 0) minor.push(r10(k*ms));
+  }
+  return {step, major, minor};
+}
+function fmtF(f){
+  const u = f >= 1e9 ? 'GHz' : f >= 1e6 ? 'MHz' : f >= 1e3 ? 'kHz' : 'Hz';
+  const m = {GHz:1e9, MHz:1e6, kHz:1e3, Hz:1}[u];
+  return (+(f/m).toPrecision(8)) + ' ' + u;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const getPath = (o, k) => k.split('.').reduce((a, x) => a[x], o);
+function setPath(o, k, v){ const ks = k.split('.'), last = ks.pop(); ks.reduce((a, x) => a[x], o)[last] = v; }
+
+function getMarkers(){
+  const out = [];
+  st.markers.forEach((m, i) => {
+    const v = parseFloat(m.v);
+    if (isFinite(v) && v >= 0) out.push({n:i+1, f:v*UN[m.u]});
+  });
+  return out;
+}
+
+/* ---------- rectangular plot ---------- */
+function buildRect(p, fs, fe, mk){
+  const traces = TR.filter(n => p.tr[n].on).map(n => ({name:n, color:p.tr[n].c}));
+  const lw = Math.min(6, Math.max(0.5, parseFloat(p.lw) || 1.8));
+  const W = 960, H = 440, ml = 64, mr = 24, mt = 20, mb = 50, pw = W-ml-mr, ph = H-mt-mb;
+  const series = [];
+  vis().forEach(F => {
+    const d = F.data, lo = lb(d.f, fs), hi = ub(d.f, fe), xs = [];
+    for (let i = lo; i < hi; i++) xs.push(d.f[i]);
+    traces.forEach(t => series.push({...t, F, dash: DASHES[F.dashIdx], xs, y: xs.map((_, j) => db(d.S[t.name].re[lo+j], d.S[t.name].im[lo+j]))}));
+  });
+  const xu = (p.xunit !== 'auto' && UN[p.xunit]) ? p.xunit : (fe >= 1e9 ? 'GHz' : fe >= 1e6 ? 'MHz' : 'kHz'), xm = UN[xu];
+
+  let y0, y1;
+  const mmin = parseFloat(p.ymin), mmax = parseFloat(p.ymax);
+  if (p.yAuto || !isFinite(mmin) || !isFinite(mmax) || mmin >= mmax){
+    let mn = Infinity, mx = -Infinity;
+    series.forEach(s => s.y.forEach(v => { if (v < mn) mn = v; if (v > mx) mx = v; }));
+    if (!isFinite(mn)){ mn = -60; mx = 0; }
+    if (mx - mn < 1){ mx += .5; mn -= .5; }
+    const pad = (mx-mn)*0.05, uy = parseFloat(p.ystep);
+    const step = (uy > 0 && (mx-mn+2*pad)/uy <= 200) ? uy : niceStep(mx-mn+2*pad, 8);
+    y0 = r10(Math.floor((mn-pad)/step)*step); y1 = r10(Math.ceil((mx+pad)/step)*step);
+  } else { y0 = mmin; y1 = mmax; }
+  const yt = axisTicks(y0, y1, p.ystep, p.yminor, 8);
+  const xt = axisTicks(fs/xm, fe/xm, p.xstep, p.xminor, 10);
+
+  const X = f => ml + (f-fs)/(fe-fs)*pw, Y = v => mt + (y1-v)/(y1-y0)*ph;
+  const fnt = 'font-family="Instrument Sans, system-ui, sans-serif"';
+  let g = '';
+  const xd = Math.min(decs(xt.step), 8), yd = Math.min(decs(yt.step), 6);
+  xt.minor.forEach(v => {
+    const x = X(v*xm);
+    if (p.grid) g += `<line x1="${x}" x2="${x}" y1="${mt}" y2="${mt+ph}" stroke="#eff3f6"/>`;
+    g += `<line x1="${x}" x2="${x}" y1="${mt+ph}" y2="${mt+ph+3}" stroke="#8795a3"/>`;
+  });
+  xt.major.forEach(v => {
+    const x = X(v*xm);
+    if (p.grid) g += `<line x1="${x}" x2="${x}" y1="${mt}" y2="${mt+ph}" stroke="#dde4ea"/>`;
+    g += `<line x1="${x}" x2="${x}" y1="${mt+ph}" y2="${mt+ph+6}" stroke="#6b7a89"/>`;
+    g += `<text x="${x}" y="${mt+ph+21}" text-anchor="middle" font-size="12" fill="#45566a" ${fnt}>${v.toFixed(xd)}</text>`;
+  });
+  yt.minor.forEach(v => {
+    const y = Y(v);
+    if (p.grid) g += `<line x1="${ml}" x2="${ml+pw}" y1="${y}" y2="${y}" stroke="#eff3f6"/>`;
+    g += `<line x1="${ml-3}" x2="${ml}" y1="${y}" y2="${y}" stroke="#8795a3"/>`;
+  });
+  yt.major.forEach(v => {
+    const y = Y(v);
+    if (p.grid) g += `<line x1="${ml}" x2="${ml+pw}" y1="${y}" y2="${y}" stroke="#dde4ea"/>`;
+    g += `<line x1="${ml-6}" x2="${ml}" y1="${y}" y2="${y}" stroke="#6b7a89"/>`;
+    g += `<text x="${ml-10}" y="${y+4}" text-anchor="end" font-size="12" fill="#45566a" ${fnt}>${v.toFixed(yd)}</text>`;
+  });
+  g += `<rect x="${ml}" y="${mt}" width="${pw}" height="${ph}" fill="none" stroke="#6b7a89"/>`;
+  g += `<text x="${ml+pw/2}" y="${H-10}" text-anchor="middle" font-size="13" fill="#2a3a4b" ${fnt}>Frequency (${xu})</text>`;
+  g += `<text transform="translate(16 ${mt+ph/2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#2a3a4b" ${fnt}>Magnitude (dB)</text>`;
+  let tr = '';
+  series.forEach(s => {
+    const xs = s.xs; if (!xs.length) return;
+    const d = xs.map((f, i) => (i ? 'L' : 'M') + X(f).toFixed(2) + ' ' + Y(s.y[i]).toFixed(2)).join('');
+    tr += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${lw}" stroke-linejoin="round"${s.dash ? ` stroke-dasharray="${s.dash}"` : ''}/>`;
+  });
+  g += `<g clip-path="url(#s2rclip${p.id})">${tr}</g>`;
+  mk.forEach(m => {
+    if (m.f < fs || m.f > fe) return;
+    const x = X(m.f);
+    g += `<line x1="${x}" x2="${x}" y1="${mt}" y2="${mt+ph}" stroke="#374151" stroke-dasharray="5 4"/>`;
+    g += `<rect x="${x-14}" y="${mt}" width="28" height="17" rx="3" fill="#374151"/><text x="${x}" y="${mt+12.5}" text-anchor="middle" font-size="11.5" font-weight="600" fill="#fff" ${fnt}>M${m.n}</text>`;
+    series.forEach(s => {
+      const v = interp(s.F, s.name, m.f); if (!v) return;
+      const yy = Y(db(v.re, v.im));
+      if (yy < mt || yy > mt+ph) return;
+      g += `<circle cx="${x}" cy="${yy}" r="4.5" fill="${s.color}" stroke="#fff" stroke-width="1.5"/>`;
+    });
+    g += `<rect data-mk="${m.n}" x="${x-9}" y="${mt}" width="18" height="${ph}" fill="transparent" style="cursor:ew-resize"><title>Drag to move M${m.n}</title></rect>`;
+  });
+  if (!series.length) g += `<text x="${ml+pw/2}" y="${mt+ph/2}" text-anchor="middle" font-size="14" fill="#6b7a89" ${fnt}>Select at least one trace and one file</text>`;
+  g += `<rect class="sel" y="${mt}" height="${ph}" fill="#0f5b73" fill-opacity=".14" stroke="#0f5b73" style="display:none"/>`;
+  g += `<line class="hv" y1="${mt}" y2="${mt+ph}" stroke="#6b7a89" stroke-dasharray="2 3" style="display:none;pointer-events:none"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="touch-action:pan-y;cursor:crosshair" role="img" aria-label="Magnitude of S-parameters in dB versus frequency"><defs><clipPath id="s2rclip${p.id}"><rect x="${ml}" y="${mt}" width="${pw}" height="${ph}"/></clipPath></defs><rect width="${W}" height="${H}" fill="#fff"/>${g}</svg>`;
+  return {svg, series, geom:{W, ml, pw, fs, fe, names:series, multi:vis().length > 1}, y0, y1};
+}
+
+/* ---------- Smith chart ---------- */
+function buildSmith(p, list, fs, fe, mk){
+  const uid = p.id, S = {zoom:+p.zoom || 1, lw:Math.min(6, Math.max(0.5, parseFloat(p.lw) || 1.8))};
+  const Z = 520, cx = Z/2, cy = Z/2, R = 212, z = S.zoom, k = R*z;
+  const P = (re, im) => [cx + re*k, cy - im*k];
+  const fnt = 'font-family="Instrument Sans, system-ui, sans-serif"';
+  const GR = '#c3cdd7';
+  let g = '';
+  const rs = [0.2, 0.5, 1, 2, 5], xsv = [0.2, 0.5, 1, 2, 5];
+  g += `<g clip-path="url(#s2sc${uid})" fill="none" stroke="${GR}" stroke-width="1">`;
+  g += `<line x1="${cx-R}" x2="${cx+R}" y1="${cy}" y2="${cy}" stroke="#a5b2bf"/>`;
+  g += `<circle cx="${cx}" cy="${cy}" r="${k}" stroke="#8493a1" stroke-width="1.3"/>`;
+  rs.forEach(r => { g += `<circle cx="${cx + k*r/(1+r)}" cy="${cy}" r="${k/(1+r)}"/>`; });
+  xsv.forEach(x => {
+    g += `<circle cx="${cx+k}" cy="${cy - k/x}" r="${k/x}"/><circle cx="${cx+k}" cy="${cy + k/x}" r="${k/x}"/>`;
+  });
+  g += `</g>`;
+  g += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#6b7a89" stroke-width="1.4"/>`;
+  rs.forEach(r => {
+    const x = cx + k*(r-1)/(r+1);
+    if (Math.abs(x-cx) < R-10) g += `<text x="${x}" y="${cy+14}" text-anchor="middle" font-size="11" fill="#5a6b7b" ${fnt}>${r}</text>`;
+  });
+  if (z === 1){
+    xsv.forEach(x => {
+      const gx = (x*x-1)/(x*x+1), gy = 2*x/(x*x+1);
+      [[1, 'j'], [-1, '−j']].forEach(([sg, pre]) => {
+        const lx = cx + (R+14)*gx, ly = cy - sg*(R+14)*gy + 4;
+        g += `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="11" fill="#5a6b7b" ${fnt}>${pre}${x}</text>`;
+      });
+    });
+  }
+  let tr = '';
+  list.forEach(t => {
+    const d = t.F.data, lo = lb(d.f, fs), hi = ub(d.f, fe), s = d.S[t.name]; if (hi - lo < 1) return;
+    let p = '';
+    for (let i = lo; i < hi; i++){ const [x, y] = P(s.re[i], s.im[i]); p += (i === lo ? 'M' : 'L') + x.toFixed(2) + ' ' + y.toFixed(2); }
+    tr += `<path d="${p}" fill="none" stroke="${t.color}" stroke-width="${S.lw}" stroke-linejoin="round"${t.dash ? ` stroke-dasharray="${t.dash}"` : ''}/>`;
+    const [x0, y0] = P(s.re[lo], s.im[lo]), [x1, y1] = P(s.re[hi-1], s.im[hi-1]);
+    tr += `<circle cx="${x0}" cy="${y0}" r="4" fill="#fff" stroke="${t.color}" stroke-width="2"/><circle cx="${x1}" cy="${y1}" r="4" fill="${t.color}" stroke="#fff" stroke-width="1"/>`;
+  });
+  g += `<g clip-path="url(#s2sc${uid})">${tr}</g>`;
+  mk.forEach(m => {
+    list.forEach(t => {
+      const v = interp(t.F, t.name, m.f); if (!v) return;
+      const [x, y] = P(v.re, v.im);
+      if (Math.hypot(x-cx, y-cy) > R) return;
+      g += `<circle cx="${x}" cy="${y}" r="5" fill="${t.color}" stroke="#fff" stroke-width="1.6"/>`;
+      g += `<circle data-mk="${m.n}" data-fid="${t.F.id}" data-par="${t.name}" cx="${x}" cy="${y}" r="12" fill="transparent" style="cursor:grab;touch-action:none"><title>Drag to move M${m.n} along the trace</title></circle>`;
+      g += `<text x="${x+8}" y="${y-8}" font-size="12.5" font-weight="600" fill="${t.color}" stroke="#fff" stroke-width="3.5" paint-order="stroke" ${fnt}>M${m.n}</text>`;
+    });
+  });
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${Z} ${Z}" role="img" aria-label="Smith chart"><defs><clipPath id="s2sc${uid}"><circle cx="${cx}" cy="${cy}" r="${R}"/></clipPath></defs><rect width="${Z}" height="${Z}" fill="#fff"/>${g}</svg>`;
+}
+
+/* ---------- marker table ---------- */
+function usage(){
+  const show = new Set(), zs = new Set();
+  st.plots.forEach(p => {
+    if (p.type === 'mag') TR.forEach(n => { if (p.tr[n].on){ show.add(n); if (n === 'S11' || n === 'S22') zs.add(n); } });
+    else (p.param === 'both' ? ['S11','S22'] : [p.param]).forEach(n => { show.add(n); zs.add(n); });
+  });
+  return {show:TR.filter(n => show.has(n)), zs:['S11','S22'].filter(n => zs.has(n))};
+}
+function buildTable(){
+  const mk = getMarkers(), files = vis(), {show, zs} = usage();
+  if (!mk.length) return '<div class="s2-note">Add a marker frequency in the sidebar to read values here.</div>';
+  if (!files.length) return '<div class="s2-note">Show at least one file to read marker values.</div>';
+  if (!show.length) return '<div class="s2-note">Add a plot with at least one trace to read marker values.</div>';
+  const multi = files.length > 1;
+  let h = '<table><thead><tr><th>Marker</th><th>Frequency</th>' + (multi ? '<th>File</th>' : '') + show.map(n => `<th>${n}</th>`).join('') + zs.map(n => `<th>Z (${n})</th>`).join('') + '</tr></thead><tbody>';
+  mk.forEach(m => files.forEach(F => {
+    h += `<tr><td>M${m.n}</td><td>${esc(fmtF(m.f))}</td>` + (multi ? `<td>${esc(F.name)}</td>` : '');
+    show.forEach(n => {
+      const v = interp(F, n, m.f);
+      h += '<td>' + (v ? `${db(v.re, v.im).toFixed(2)} dB ∠ ${deg(v.re, v.im).toFixed(1)}°` : 'out of file range') + '</td>';
+    });
+    zs.forEach(n => {
+      const v = interp(F, n, m.f);
+      if (!v){ h += '<td>–</td>'; return; }
+      const nr = 1+v.re, ni = v.im, dr = 1-v.re, di = -v.im, den = dr*dr + di*di, z0 = F.data.z0;
+      const zr = z0*(nr*dr + ni*di)/den, zi = z0*(ni*dr - nr*di)/den;
+      h += `<td>${zr.toFixed(2)} ${zi < 0 ? '−' : '+'} j${Math.abs(zi).toFixed(2)} Ω</td>`;
+    });
+    h += '</tr>';
+  }));
+  return h + '</tbody></table>';
+}
+
+/* ---------- plots ---------- */
+const plotsEl = $('plots');
+function newPlot(type){
+  const base = {id:++st.pid, type, open:true, full:true, sa:'', ua:'MHz', sb:'', ub:'MHz', lw:'1.8'};
+  if (type === 'mag') return {...base, title:'Magnitude ' + (++st.nMag),
+    tr:{S21:{on:true, c:COL.S21}, S11:{on:true, c:COL.S11}, S22:{on:true, c:COL.S22}, S12:{on:false, c:COL.S12}},
+    yAuto:true, ymin:'-60', ymax:'0', ystep:'', yminor:'', xunit:'auto', xstep:'', xminor:'', grid:true};
+  return {...base, title:'Smith chart ' + (++st.nSmith), param:'S11', zoom:'1', c:{S11:COL.S11, S22:COL.S22}};
+}
+const num = (lab, k, ph = '') => `<div class="s2-row"><label class="s2-lab">${lab}</label><input type="number" step="any" data-k="${k}" aria-label="${lab}"${ph ? ` placeholder="${ph}"` : ''}></div>`;
+const spanBlock = `<div class="s2-sblk"><h3>Frequency span</h3>
+  <div class="s2-row"><label class="s2-lab">Start</label><input type="number" step="any" min="0" data-k="sa" aria-label="Start frequency"><select data-k="ua" data-units aria-label="Start unit"></select></div>
+  <div class="s2-row"><label class="s2-lab">Stop</label><input type="number" step="any" min="0" data-k="sb" aria-label="Stop frequency"><select data-k="ub" data-units aria-label="Stop unit"></select></div>
+  <div class="s2-row"><button type="button" class="s2-btn s2-small" data-act="full">Use full file range</button></div></div>`;
+const magSettings = spanBlock + `
+  <div class="s2-sblk"><h3>Traces</h3>${TR.map(n => `<div class="s2-row"><label class="s2-chk"><input type="checkbox" data-k="tr.${n}.on"> ${n}</label><input type="color" data-k="tr.${n}.c" aria-label="${n} color"></div>`).join('')}</div>
+  <div class="s2-sblk"><h3>Y axis (dB)</h3>
+    <div class="s2-row"><label class="s2-chk"><input type="checkbox" data-k="yAuto"> Auto range</label></div>
+    ${num('Min', 'ymin')}${num('Max', 'ymax')}${num('Major step', 'ystep', 'auto')}${num('Minor divisions', 'yminor', 'none')}
+  </div>
+  <div class="s2-sblk"><h3>X axis</h3>
+    <div class="s2-row"><label class="s2-lab">Unit</label><select data-k="xunit" aria-label="X axis unit"><option value="auto">Auto</option><option>GHz</option><option>MHz</option><option>kHz</option></select></div>
+    ${num('Major step', 'xstep', 'auto')}${num('Minor divisions', 'xminor', 'none')}
+    <p class="s2-hintline">Steps are in the axis unit. Leave blank for automatic ticks.</p>
+  </div>
+  <div class="s2-sblk"><h3>Style</h3>${num('Line width', 'lw')}<div class="s2-row"><label class="s2-chk"><input type="checkbox" data-k="grid"> Show grid</label></div></div>`;
+const smithSettings = spanBlock + `
+  <div class="s2-sblk"><h3>Chart</h3>
+    <div class="s2-row"><label class="s2-lab">Plot</label><select data-k="param" aria-label="Smith chart parameter" style="flex:1"><option value="S11">S11</option><option value="S22">S22</option><option value="both">S11 and S22 in the same chart</option></select></div>
+    <div class="s2-row"><label class="s2-lab">Zoom</label><select data-k="zoom" aria-label="Smith chart zoom" style="flex:1"><option value="1">1× (full chart)</option><option value="2">2×</option><option value="4">4×</option></select></div>
+  </div>
+  <div class="s2-sblk"><h3>Traces</h3>${['S11','S22'].map(n => `<div class="s2-row"><label class="s2-lab">${n} color</label><input type="color" data-k="c.${n}" aria-label="${n} color"></div>`).join('')}${num('Line width', 'lw')}</div>`;
+
+function bind(inp, p){
+  const k = inp.dataset.k, isCheck = inp.type === 'checkbox', v = getPath(p, k);
+  if (isCheck) inp.checked = !!v; else inp.value = v;
+  const h = () => {
+    setPath(p, k, isCheck ? inp.checked : inp.value);
+    if (k === 'sa' || k === 'sb') p.full = false;
+    renderPlot(p);
+  };
+  inp.addEventListener(isCheck || inp.tagName === 'SELECT' ? 'change' : 'input', h);
+  if (inp.type === 'color') inp.addEventListener('change', h);
+}
+function makeCard(p){
+  const el = document.createElement('figure'); el.className = 's2-fig'; el.dataset.id = p.id;
+  el.innerHTML = `<header><input class="s2-ttl" data-k="title" aria-label="Plot title"><span class="s2-meta spanLabel"></span><div class="s2-cbtns"><button type="button" class="s2-btn s2-small" data-act="dup">Duplicate</button><button type="button" class="s2-icon" data-act="del" aria-label="Remove plot">×</button></div></header>
+  <details class="settings"${p.open ? ' open' : ''}><summary>Settings</summary><div class="s2-sgrid">${p.type === 'mag' ? magSettings : smithSettings}</div></details>
+  <div class="s2-plot${p.type === 'smith' ? ' s2-smithwrap' : ''}"></div><div class="s2-legend"></div>
+  ${p.type === 'mag' ? '<div class="s2-readout hover"></div><p class="s2-hint">Drag across the plot to zoom its span. Drag a marker line to move it.</p>' : '<p class="s2-hint">Normalized to each file’s reference impedance. Open circle marks the start of the span, filled circle the end. Drag a marker dot to move it along its trace.</p>'}`;
+  el.querySelectorAll('[data-units]').forEach(s => s.innerHTML = UNIT_OPTS);
+  el.querySelectorAll('[data-k]').forEach(i => bind(i, p));
+  el.querySelector('[data-act=full]').addEventListener('click', () => { p.full = true; renderPlot(p); });
+  el.querySelector('[data-act=dup]').addEventListener('click', () => {
+    const c = JSON.parse(JSON.stringify(p)); c.id = ++st.pid; c.title = p.title + ' copy';
+    st.plots.splice(st.plots.indexOf(p) + 1, 0, c);
+    const ce = makeCard(c); el.after(ce); drawPlot(c); refreshTable(); ce.scrollIntoView({block:'nearest'});
+  });
+  el.querySelector('[data-act=del]').addEventListener('click', () => {
+    st.plots = st.plots.filter(x => x !== p); el.remove(); refreshTable();
+  });
+  el.querySelector('details').addEventListener('toggle', e => { p.open = e.target.open; });
+  return el;
+}
+function buildCards(){ plotsEl.innerHTML = ''; st.plots.forEach(p => plotsEl.appendChild(makeCard(p))); }
+const cardOf = p => plotsEl.querySelector(`[data-id="${p.id}"]`);
+const setIn = (card, k, v) => { const e = card.querySelector(`[data-k="${k}"]`); if (e) e.value = v; };
+
+function spanOf(p, card){
+  const [r0, r1] = range();
+  let a, b;
+  if (p.full){
+    a = r0; b = r1;
+    p.sa = String(+(a/UN[p.ua]).toPrecision(10)); p.sb = String(+(b/UN[p.ub]).toPrecision(10));
+    if (card){ setIn(card, 'sa', p.sa); setIn(card, 'sb', p.sb); }
+  } else {
+    a = parseFloat(p.sa)*UN[p.ua]; b = parseFloat(p.sb)*UN[p.ub];
+    if (!isFinite(a)) a = r0;
+    if (!isFinite(b)) b = r1;
+    if (a > b) [a, b] = [b, a];
+    if (b - a <= 0) b = a + (r1 - r0)/1000;
+  }
+  return [a, b];
+}
+function setSpan(p, a, b){
+  p.full = false;
+  p.sa = String(+(a/UN[p.ua]).toPrecision(8)); p.sb = String(+(b/UN[p.ub]).toPrecision(8));
+  renderPlot(p);
+}
+function legendHtml(items, multi){
+  return items.map(t => `<span class="s2-key"><svg width="30" height="8" viewBox="0 0 30 8" aria-hidden="true"><line x1="1" x2="29" y1="4" y2="4" stroke="${t.color}" stroke-width="3"${t.dash ? ` stroke-dasharray="${t.dash}"` : ''}/></svg>${esc(t.name)}${multi ? ' · ' + esc(t.F.name) : ''}</span>`).join('');
+}
+function drawPlot(p){
+  const card = cardOf(p); if (!card || !st.files.length) return;
+  const mk = getMarkers(), [fs, fe] = spanOf(p, card), multi = vis().length > 1;
+  card.querySelector('.spanLabel').textContent = fmtF(fs) + ' to ' + fmtF(fe);
+  const plot = card.querySelector('.s2-plot'), leg = card.querySelector('.s2-legend');
+  if (p.type === 'mag'){
+    const r = buildRect(p, fs, fe, mk);
+    plot.innerHTML = r.svg; leg.innerHTML = legendHtml(r.series.filter((s, i, a) => a.findIndex(x => x.name === s.name && x.F === s.F) === i), multi);
+    attachInteract(plot.firstElementChild, r.geom, p, card);
+    card.querySelector('.hover').textContent = '';
+    if (p.yAuto){ p.ymin = String(+r.y0.toFixed(4)); p.ymax = String(+r.y1.toFixed(4)); setIn(card, 'ymin', p.ymin); setIn(card, 'ymax', p.ymax); }
+    card.querySelector('[data-k=ymin]').disabled = card.querySelector('[data-k=ymax]').disabled = p.yAuto;
+  } else {
+    const names = p.param === 'both' ? ['S11','S22'] : [p.param], list = [];
+    vis().forEach(F => names.forEach(n => list.push({name:n, color:p.c[n], F, dash:DASHES[F.dashIdx]})));
+    plot.innerHTML = buildSmith(p, list, fs, fe, mk); leg.innerHTML = legendHtml(list, multi);
+    attachSmith(plot.firstElementChild, p, card, fs, fe);
+  }
+}
+function refreshTable(){ if (st.files.length) $('tabWrap').innerHTML = buildTable(); }
+function renderPlot(p){ drawPlot(p); refreshTable(); }
+
+let raf = 0;
+function render(){ cancelAnimationFrame(raf); raf = requestAnimationFrame(doRender); }
+function doRender(){
+  const has = st.files.length > 0;
+  $('empty').hidden = has; $('figs').hidden = !has;
+  $('btnExport').disabled = !has;
+  if (!has) return;
+  st.plots.forEach(drawPlot); refreshTable();
+}
+
+function attachInteract(svg, g, p, card){
+  const sel = svg.querySelector('.sel'), hv = svg.querySelector('.hv'), out = card.querySelector('.hover');
+  let x0 = null;
+  const X = e => { const r = svg.getBoundingClientRect(); return Math.min(Math.max((e.clientX - r.left)*g.W/r.width, g.ml), g.ml+g.pw); };
+  const fAt = x => g.fs + (x-g.ml)/g.pw*(g.fe-g.fs);
+  svg.addEventListener('pointerdown', e => {
+    const mt = e.target.closest && e.target.closest('[data-mk]');
+    if (mt){
+      e.preventDefault();
+      dragMarker(+mt.dataset.mk, ev => {
+        const cur = card.querySelector('.s2-plot svg'), r = cur.getBoundingClientRect();
+        return fAt(Math.min(Math.max((ev.clientX - r.left)*g.W/r.width, g.ml), g.ml+g.pw));
+      });
+      return;
+    }
+    const r = svg.getBoundingClientRect(), raw = (e.clientX - r.left)*g.W/r.width;
+    if (raw < g.ml || raw > g.ml+g.pw) return;
+    x0 = X(e); svg.setPointerCapture(e.pointerId);
+    sel.setAttribute('x', x0); sel.setAttribute('width', 0); sel.style.display = 'block';
+  });
+  svg.addEventListener('pointermove', e => {
+    const x = X(e);
+    if (x0 !== null){ sel.setAttribute('x', Math.min(x0, x)); sel.setAttribute('width', Math.abs(x-x0)); }
+    hv.setAttribute('x1', x); hv.setAttribute('x2', x); hv.style.display = 'block';
+    const f = fAt(x);
+    out.innerHTML = `<b>${esc(fmtF(f))}</b>` + g.names.map(t => {
+      const v = interp(t.F, t.name, f);
+      return v ? `<span style="color:${t.color}">${t.name}${g.multi ? ' · ' + esc(t.F.name) : ''}: ${db(v.re, v.im).toFixed(2)} dB</span>` : '';
+    }).join('');
+  });
+  svg.addEventListener('pointerup', e => {
+    if (x0 === null) return;
+    const x = X(e), a = Math.min(x0, x), b = Math.max(x0, x);
+    x0 = null; sel.style.display = 'none';
+    if (b - a > 8) setSpan(p, fAt(a), fAt(b));
+  });
+  svg.addEventListener('pointercancel', () => { x0 = null; sel.style.display = 'none'; });
+  svg.addEventListener('pointerleave', () => { hv.style.display = 'none'; out.textContent = ''; });
+}
+
+/* ---------- marker dragging ---------- */
+function setMarkerFreq(n, f){
+  const m = st.markers[n-1]; if (!m) return;
+  m.v = String(+(f/UN[m.u]).toPrecision(8));
+  const row = root.querySelectorAll('#s2-mrows .s2-row')[n-1];
+  if (row) row.querySelector('input').value = m.v;
+  render();
+}
+function dragMarker(n, toF){
+  const mv = e => { const f = toF(e); if (f != null) setMarkerFreq(n, f); };
+  const up = () => {
+    window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+    document.documentElement.style.cursor = '';
+  };
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+  document.documentElement.style.cursor = 'grabbing';
+}
+function attachSmith(svg, p, card, fs, fe){
+  svg.addEventListener('pointerdown', e => {
+    const t = e.target.closest && e.target.closest('[data-mk]'); if (!t) return;
+    e.preventDefault();
+    const F = st.files.find(x => x.id === +t.dataset.fid), name = t.dataset.par; if (!F) return;
+    const k = 212*(+p.zoom || 1), d = F.data, sv = d.S[name];
+    dragMarker(+t.dataset.mk, ev => {
+      const cur = card.querySelector('.s2-plot svg'), r = cur.getBoundingClientRect();
+      const re = ((ev.clientX - r.left)*520/r.width - 260)/k, im = (260 - (ev.clientY - r.top)*520/r.height)/k;
+      const lo = lb(d.f, fs), hi = ub(d.f, fe); let best = -1, bd = Infinity;
+      for (let i = lo; i < hi; i++){ const dd = (sv.re[i]-re)*(sv.re[i]-re) + (sv.im[i]-im)*(sv.im[i]-im); if (dd < bd){ bd = dd; best = i; } }
+      return best >= 0 ? d.f[best] : null;
+    });
+  });
+}
+
+/* ---------- markers UI ---------- */
+function unitOptions(sel, val){
+  sel.innerHTML = ['GHz','MHz','kHz'].map(u => `<option${u === val ? ' selected' : ''}>${u}</option>`).join('');
+}
+function drawMarkerRows(){
+  const box = $('mrows'); box.innerHTML = '';
+  if (!st.markers.length) box.innerHTML = '<p class="s2-hintline" style="margin:0">No markers yet.</p>';
+  st.markers.forEach((m, i) => {
+    const r = document.createElement('div'); r.className = 's2-row';
+    r.innerHTML = `<span class="s2-mname">M${i+1}</span><input type="number" step="any" min="0" aria-label="Marker ${i+1} frequency"><select aria-label="Marker ${i+1} unit"></select><button type="button" class="s2-icon" aria-label="Remove marker ${i+1}">×</button>`;
+    const inp = r.querySelector('input'), sel = r.querySelector('select');
+    inp.value = m.v ?? '';
+    unitOptions(sel, m.u);
+    inp.addEventListener('input', () => { m.v = inp.value; render(); });
+    sel.addEventListener('change', () => { m.u = sel.value; render(); });
+    r.querySelector('button').addEventListener('click', () => { st.markers.splice(i, 1); drawMarkerRows(); });
+    box.appendChild(r);
+  });
+  render();
+}
+function addMarker(v, u = 'MHz'){ st.markers.push({id:++st.mid, v, u}); drawMarkerRows(); }
+
+/* ---------- loading ---------- */
+function showMsg(t){ const m = $('msg'); m.textContent = t || ''; m.hidden = !t; }
+function addFile(text, name, opts = {}){
+  const data = parseTouchstone(text);
+  st.files.push({id:++st.fid, name, text, data, dashIdx:opts.dashIdx ?? (st.files.length % DASHES.length), visible:opts.visible ?? true});
+}
+function updateHeader(){
+  const n = st.files.length;
+  if (!n){ $('fileinfo').textContent = 'Load one or more two-port Touchstone files to begin.'; return; }
+  const [a, b] = range(), F = st.files[0];
+  $('fileinfo').textContent = n === 1
+    ? `${F.name} · ${F.data.f.length} points · ${fmtF(a)} to ${fmtF(b)} · Z0 = ${F.data.z0} Ω`
+    : `${n} files · ${fmtF(a)} to ${fmtF(b)}`;
+}
+function drawFiles(){
+  const box = $('flist'); box.innerHTML = '';
+  st.files.forEach(F => {
+    const f = F.data.f, r = document.createElement('div'); r.className = 's2-frow';
+    r.innerHTML = `<input type="checkbox" aria-label="Show ${esc(F.name)}"><div class="s2-fn" title="${esc(F.name)}">${esc(F.name)}<small>${f.length} pts · ${esc(fmtF(f[0]))} to ${esc(fmtF(f[f.length-1]))}</small></div><select aria-label="Line style for ${esc(F.name)}">${DASH_NAMES.map((n, i) => `<option value="${i}"${i === F.dashIdx ? ' selected' : ''}>${n}</option>`).join('')}</select><button type="button" class="s2-icon" aria-label="Remove ${esc(F.name)}">×</button>`;
+    const cb = r.querySelector('input'), sel = r.querySelector('select');
+    cb.checked = F.visible;
+    cb.addEventListener('change', () => { F.visible = cb.checked; updateHeader(); render(); });
+    sel.addEventListener('change', () => { F.dashIdx = +sel.value; render(); });
+    r.querySelector('button').addEventListener('click', () => {
+      st.files = st.files.filter(x => x !== F);
+      drawFiles(); updateHeader(); render();
+    });
+    box.appendChild(r);
+  });
+}
+function afterLoad(){
+  drawFiles(); updateHeader();
+  if (st.files.length && !st.markers.length){ const [a, b] = range(); addMarker(+(((a+b)/2)/1e6).toPrecision(6), 'MHz'); }
+  else render();
+}
+async function loadFiles(list){
+  const errs = [];
+  for (const f of list){
+    try { addFile(await f.text(), f.name); } catch (e){ errs.push(f.name + ': ' + e.message); }
+  }
+  showMsg(errs.join('  '));
+  afterLoad();
+}
+
+/* ---------- interactive report export ---------- */
+const jsq = v => JSON.stringify(v).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+function reportHtml(){
+  const state = {
+    files: st.files.map(F => ({name:F.name, text:F.text, dashIdx:F.dashIdx, visible:F.visible})),
+    markers: st.markers.map(m => ({v:m.v, u:m.u})),
+    plots: st.plots, nMag: st.nMag, nSmith: st.nSmith
+  };
+  const glue = "var root=document.getElementById('s2-app');if(!root){root=document.createElement('div');root.id='s2-app';(document.currentScript&&document.currentScript.parentNode||document.body).appendChild(root);}s2main(root,PARTS,EMBED);";
+  const code = '(function(){\nconst PARTS=' + jsq(PARTS) + ';\nconst EMBED=' + jsq(state) + ';\n' + s2main.toString() + '\n' + glue + '\n})();';
+  return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>S2P report</title>\n<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">\n<style>' + PARTS.shell + '</style></head>\n<body><div id="s2-app"></div>\n<scr' + 'ipt>' + code + '</scr' + 'ipt>\n</body></html>';
+}
+async function copyText(t){
+  try { await navigator.clipboard.writeText(t); return true; } catch (e){}
+  try {
+    const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok;
+  } catch (e){ return false; }
+}
+async function exportReport(){
+  if (!st.files.length) return;
+  const html = reportHtml(), filename = 's2p-report.html', box = $('xbox');
+  try {
+    if (dlCap){ await dlCap.save({filename, data: html}); return; }
+    const url = URL.createObjectURL(new Blob([html], {type:'text/html'}));
+    box.hidden = false;
+    box.innerHTML = 'Report ready (' + Math.round(html.length/1024) + ' KB): <a href="' + url + '" download="' + filename + '">Download ' + filename + '</a><button type="button" class="s2-btn s2-small">Copy HTML</button><span></span>';
+    const msg = box.querySelector('span');
+    box.querySelector('button').addEventListener('click', async () => { msg.textContent = (await copyText(html)) ? 'Copied. Paste into a new HTML note or file.' : 'Copy was blocked here; use the download link.'; });
+    box.querySelector('a').click();
+  } catch (e){ if (e && e.code !== 'declined') showMsg('The report could not be saved (' + (e.code || e.message) + ').'); }
+}
+let dlCap = null;
+
+/* ---------- init ---------- */
+$('file').addEventListener('change', e => { const fl = Array.from(e.target.files); e.target.value = ''; if (fl.length) loadFiles(fl); });
+const ex = () => loadFiles([{name:'example-bandpass-1.5GHz.s2p', text:async () => exampleText(1.5)}, {name:'example-bandpass-1.8GHz.s2p', text:async () => exampleText(1.8)}]);
+$('btnExample').addEventListener('click', ex); $('btnExample2').addEventListener('click', ex);
+$('btnExport').addEventListener('click', exportReport);
+$('btnAddMarker').addEventListener('click', () => {
+  const last = st.markers.length ? parseFloat(st.markers[st.markers.length-1].v) : NaN, [a, b] = range();
+  addMarker(isFinite(last) ? last : (st.files.length ? +(((a+b)/2)/1e6).toPrecision(6) : ''), 'MHz');
+});
+function addPlot(type){
+  const p = newPlot(type); st.plots.push(p);
+  const c = makeCard(p); plotsEl.appendChild(c); drawPlot(p); refreshTable(); c.scrollIntoView({block:'nearest'});
+}
+$('btnAddMag').addEventListener('click', () => addPlot('mag'));
+$('btnAddSmith').addEventListener('click', () => addPlot('smith'));
+const drop = $('drop');
+['dragenter','dragover'].forEach(t => root.addEventListener(t, e => { e.preventDefault(); drop.classList.add('s2-over'); }));
+['dragleave','drop'].forEach(t => root.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('s2-over'); }));
+root.addEventListener('drop', e => { const fl = e.dataTransfer ? Array.from(e.dataTransfer.files) : []; if (fl.length) loadFiles(fl); });
+
+if (window.claude && window.claude.use){
+  window.claude.use('downloads').then(c => { dlCap = c; }).catch(() => {});
+}
+if (EMBED){
+  try {
+    const o = EMBED;
+    o.files.forEach(f => addFile(f.text, f.name, {dashIdx:f.dashIdx, visible:f.visible}));
+    st.plots = o.plots; st.pid = Math.max(0, ...o.plots.map(p => p.id)); st.nMag = o.nMag || 0; st.nSmith = o.nSmith || 0;
+    st.markers = (o.markers || []).map(m => ({id:++st.mid, v:m.v, u:m.u}));
+    buildCards(); drawFiles(); updateHeader(); drawMarkerRows();
+  } catch (e){ showMsg('The embedded data could not be loaded.'); }
+} else {
+  st.plots = [newPlot('mag')]; buildCards(); drawMarkerRows();
+}
+
+}
+var root=document.getElementById('s2-app');if(!root){root=document.createElement('div');root.id='s2-app';(document.currentScript&&document.currentScript.parentNode||document.body).appendChild(root);}s2main(root,PARTS,EMBED);
+})();
+</script>
+</body>
+</html>
