@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>RF Design Tools - Cross-Coupled LC Filter Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@1,900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --ink:#212529; --muted:#6c757d; --card:#ffffff; --line:#dee2e6; --boxbg:#f8f9fa; --thead:#e9ecef;
+  --hover:#f1f3f5; --nav:#1c2f4a; --field:#ffffff; --primary:#0d6efd; --grid:#e6e6e6; --ok:#d1e7dd; --okink:#0f5132;
+  --warnbg:#fff3cd; --warnink:#664d03; --warnline:#ffecb5; --infobg:#cff4fc; --infoink:#055160;
+  --stripe:#f6f8fa;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16191d; --ink:#e4e7ea; --muted:#9aa4ad; --card:#1e2227; --line:#343a40; --boxbg:#1a1e22; --thead:#2a2f35;
+    --hover:#262b31; --nav:#0f1b2d; --field:#14181c; --primary:#6ea8fe; --grid:#2f353b; --ok:#143626; --okink:#a3cfbb;
+    --warnbg:#332701; --warnink:#ffda6a; --warnline:#664d03; --infobg:#032830; --infoink:#6edff6; --stripe:#1c2025;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16191d; --ink:#e4e7ea; --muted:#9aa4ad; --card:#1e2227; --line:#343a40; --boxbg:#1a1e22; --thead:#2a2f35;
+  --hover:#262b31; --nav:#0f1b2d; --field:#14181c; --primary:#6ea8fe; --grid:#2f353b; --ok:#143626; --okink:#a3cfbb;
+  --warnbg:#332701; --warnink:#ffda6a; --warnline:#664d03; --infobg:#032830; --infoink:#6edff6; --stripe:#1c2025;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+h2,h5,p{margin:0}
+/* navbar */
+.navbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--nav);display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 16px}
+.brand{font:italic 900 22px Lato,system-ui,sans-serif;color:#fff;text-decoration:none;margin-right:12px;letter-spacing:.2px}
+.brand span{color:#ffc107}
+.nav-group{display:flex;flex-wrap:wrap;gap:8px}
+.nav-right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-block;font:400 16px/1.5 inherit;font-family:inherit;text-align:center;text-decoration:none;cursor:pointer;border:1px solid transparent;border-radius:.375rem;padding:.375rem .75rem;color:#212529;background:transparent;user-select:none}
+.btn-sm{font-size:14px;padding:.25rem .5rem;border-radius:.25rem}
+.btn-outline-light{color:#f8f9fa;border-color:#f8f9fa}
+.btn-outline-light:hover,.btn-outline-light.active{background:#f8f9fa;color:#212529}
+.btn-warning{background:#ffc107;border-color:#ffc107;color:#000}
+.btn-info{background:#0dcaf0;border-color:#0dcaf0;color:#000}
+.btn-success{background:#198754;border-color:#198754;color:#fff}
+.btn-outline-secondary{color:var(--muted);border-color:var(--muted)}
+.btn-outline-secondary:hover{background:var(--muted);color:var(--bg)}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.cell-ok:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+/* layout */
+.container-fluid{padding:12px 16px 32px}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.tool-name{font-size:2rem;font-weight:500;line-height:1.2;margin:6px 0 10px}
+.box_form{flex:0 0 auto;width:370px;max-width:100%;padding:10px;background:var(--boxbg);border:1px solid var(--line);border-radius:.375rem}
+.box_form.right{width:330px}
+.box{flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:14px}
+@media (max-width:1180px){.box_form,.box_form.right{width:100%}}
+.box_form h5{text-align:center;font-size:1.25rem;font-weight:500;margin:4px 0 8px}
+/* tables */
+.table{width:100%;border-collapse:collapse;margin-bottom:12px;color:var(--ink)}
+.table th,.table td{padding:.4rem .5rem;border-bottom:1px solid var(--line);vertical-align:middle;text-align:left}
+.rf_table_style thead td{background:var(--thead);font-weight:600}
+.table-hover tbody tr:hover{background:var(--hover)}
+.table-bordered th,.table-bordered td{border:1px solid var(--line)}
+.table-striped tbody tr:nth-child(odd){background:var(--stripe)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
+input[type=number],select{font:inherit;font-size:15px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:.25rem;padding:.2rem .35rem;max-width:100%}
+select{padding:.25rem .3rem}
+select.wide{width:100%}
+small.hint{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+[hidden]{display:none!important}
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:.375rem}
+.shadow-sm{box-shadow:0 .125rem .25rem rgba(0,0,0,.075)}
+.card-body{padding:12px 16px 6px}
+.card-title{font-size:1.25rem;font-weight:500;margin:0 0 6px}
+.card-text{padding:0 12px 12px}
+.text-center{text-align:center}
+.chart-wrap{padding:8px 8px 4px}
+#plot{display:block;width:100%;touch-action:pan-y}
+.alert{padding:.6rem .9rem;border:1px solid;border-radius:.375rem;font-size:14.5px;margin-bottom:8px}
+.alert-warning{background:var(--warnbg);color:var(--warnink);border-color:var(--warnline)}
+.alert-info{background:var(--infobg);color:var(--infoink);border-color:transparent}
+#alerts .alert:last-child{margin-bottom:0}
+/* compatibility matrix */
+.compat th,.compat td{text-align:center;font-size:12.5px;padding:.3rem .25rem;border:1px solid var(--line)}
+.compat th:first-child,.compat td:first-child{text-align:left}
+.compat td.cell-ok{background:var(--ok);color:var(--okink);cursor:pointer;font-weight:700}
+.compat td.cell-ok:hover{filter:brightness(.94)}
+.compat td.cell-ok.sel{outline:2px solid var(--primary);outline-offset:-2px}
+.compat td.cell-no{color:var(--muted)}
+/* schematic */
+#schematic_viewport{width:100%;height:420px;overflow:hidden;border:1px solid #ddd;background:#fff;cursor:grab;touch-action:none}
+#schematic_viewport:active{cursor:grabbing}
+#svg_display{width:100%;height:100%;display:block}
+.schematic-toolbar{margin-bottom:6px}
+/* dropdown (renamed so host stylesheets such as Trilium's Bootstrap rules cannot override it) */
+.tl-dd{position:relative;display:inline-block}
+.tl-dd-menu{display:none!important;position:absolute;left:0;top:100%;min-width:12rem;background:var(--card);border:1px solid var(--line);border-radius:.375rem;padding:.35rem 0;margin-top:2px;z-index:20;box-shadow:0 .5rem 1rem rgba(0,0,0,.15)}
+.tl-dd-menu.open{display:block!important}
+.tl-dd-item{display:block;width:100%;text-align:left;background:none;border:0;padding:.35rem 1rem;color:var(--ink);font:inherit;cursor:pointer}
+.tl-dd-item:hover{background:var(--hover)}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0}
+textarea{width:100%;min-height:260px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:.25rem;padding:8px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0}
+.sum div{padding:6px 16px 10px}
+.sum dt{font-size:13px;color:var(--muted)}
+.sum dd{margin:0;font:500 17px ui-monospace,Menlo,Consolas,monospace}
+.sum{margin:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.scrollx{overflow-x:auto}
+footer{text-align:center;color:var(--muted);font-size:14px;padding:8px 0 16px}
+</style>
+<style>
+input[type=text]{font:inherit;font-size:15px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:.25rem;padding:.2rem .35rem;max-width:100%}
+textarea.mm{min-height:120px;margin:4px 0}
+.hint{color:var(--muted);font-size:12.5px;margin:3px 0 0}
+.lg{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);padding:0 12px 6px}
+.lg i{display:inline-block;width:22px;border-top:2.5px solid;vertical-align:middle;margin-right:5px}
+#tlf-cv{display:block;width:100%;height:340px}
+#tlf-st{min-height:1.4em;font-size:14px;margin:6px 0}
+.sc{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="container-fluid" id="tlf">
+  <div class="row"><h2 class="tool-name">Cross-Coupled LC Filter Design</h2></div>
+  <div class="row">
+
+    <div class="box_form" id="leftForm">
+      <h5>Filter Type</h5>
+      <table class="rf_table_style table table-hover">
+        <thead><tr><td>Parameter</td><td>Value</td></tr></thead>
+        <tbody>
+          <tr><td>Mode</td><td><select id="tlf-md" class="wide"><option value="a">Automatic synthesis</option><option value="m">Manual M matrix</option></select></td></tr>
+          <tr id="tlf-man" hidden><td colspan="2">M matrix (symmetric N×N, one row per line)<textarea id="tlf-mm" class="mm" spellcheck="false"></textarea>qe (both ports) <input type="number" id="tlf-qe" value="1.2" step="any" style="width:5em"></td></tr>
+          <tr><td>Example</td><td><select id="tlf-pre" class="wide"><option value="4|1-4|1.7">Quadruplet, N=4 (1-4)</option><option value="6|2-5|1.6">Order 6, central quadruplet (2-5)</option><option value="6|1-4;3-6|1.5">Order 6, double quadruplet</option></select></td></tr>
+          <tr><td>f<sub>0</sub> (MHz)</td><td><input type="number" id="tlf-f0" value="1800" step="any" style="width:6em"></td></tr>
+          <tr><td>Bandwidth (MHz)</td><td><input type="number" id="tlf-bw" value="60" step="any" style="width:6em"></td></tr>
+          <tr><td>Order N (2–8)</td><td><input type="number" id="tlf-n" value="4" min="2" max="8" step="1" style="width:4em"></td></tr>
+          <tr><td>Return loss (dB)</td><td><input type="number" id="tlf-rl" value="20" step="any" style="width:5em"></td></tr>
+          <tr id="tlf-auto"><td>Cross-couplings (i-j;i-j)</td><td><input type="text" id="tlf-cx" value="1-4" style="width:7em"></td></tr>
+          <tr><td>Transmission zeros (MHz)</td><td><input type="text" id="tlf-zs" value="1851.72" placeholder="e.g. 1851.72, 1790" style="width:100%"><small class="hint">Comma-separated, outside the passband. A zero at f also creates one at f0²/f. In manual mode they are used for markers and checking only.</small></td></tr>
+        </tbody>
+      </table>
+      <div id="tlf-st" role="status"></div>
+      <div class="btn-row">
+        <button class="btn btn-success" type="button" id="tlf-go">Synthesize and simulate</button>
+        <div class="tl-dd">
+          <button class="btn btn-warning" type="button" id="simBtn">Simulation Files &#9662;</button>
+          <div class="tl-dd-menu" id="simMenu">
+            <button class="tl-dd-item" type="button" id="openQucs">Qucs-S schematic (.sch)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="card shadow-sm"><div class="chart-wrap"><canvas id="tlf-cv" aria-label="S21 and S11 response"></canvas></div>
+        <div class="lg"><span><i style="border-color:#e5262b"></i>S21</span><span><i style="border-color:#1f5fe0"></i>S11</span><span><i style="border-color:var(--muted);border-top-style:dashed"></i>Ideal matrix</span><span><i style="border-color:var(--warnink);border-top-style:dotted"></i>Specified zeros</span></div>
+        <p class="hint" style="padding:0 12px 10px">Solid curves are the real, lossy LC circuit; dashed curves are the ideal coupling-matrix response.</p></div>
+      <div class="card"><div class="card-body"><h5 class="card-title">Transmission Zeros</h5></div><div class="card-text sc" id="tlf-zt"></div></div>
+      <div class="card"><div class="card-body"><h5 class="card-title">Realized Coupling Matrix</h5></div><div class="card-text sc" id="tlf-mt"></div></div>
+      <div class="card"><div class="card-body"><h5 class="card-title">Components</h5></div><div class="card-text sc" id="tlf-cp"></div></div>
+      <div class="card" id="qucsCard"><div class="card-body"><h5 class="card-title">Qucs-S Schematic</h5></div>
+        <div class="card-text"><textarea id="qucs" readonly spellcheck="false" style="min-height:220px"></textarea>
+          <div class="btn-row"><button class="btn btn-sm btn-success" type="button" id="dlQucs">Download .sch</button><button class="btn btn-sm btn-outline-secondary" type="button" id="copyQucs">Copy text</button></div>
+          <p class="hint">Lossless export (unloaded Q is not carried over). Each resonator is a shunt C and L to ground; the ports are Pac sources behind series capacitors. If the buttons are blocked by the host app, click in the box, press Ctrl+A then Ctrl+C, and save the text as a .sch file.</p></div></div>
+    </div>
+
+    <div class="box_form right" id="rightForm">
+      <h5>Circuit Parameters</h5>
+      <table class="rf_table_style table">
+        <thead><tr><td>Parameter</td><td>Value</td></tr></thead>
+        <tbody>
+          <tr><td>Reference C (pF)</td><td><input type="number" id="tlf-cr" value="4" step="any" style="width:5em"></td></tr>
+          <tr><td>Unloaded Q (0 = &infin;)</td><td><input type="number" id="tlf-qu" value="150" step="any" style="width:5em"></td></tr>
+          <tr><td>Port impedance (&Omega;)</td><td><input type="number" id="tlf-r0" value="50" step="any" style="width:5em"></td></tr>
+        </tbody>
+      </table>
+      <h5>Simulation Parameters</h5>
+      <table class="rf_table_style table">
+        <thead><tr><td>Parameter</td><td>Value</td></tr></thead>
+        <tbody><tr><td>Span (× BW)</td><td><input type="number" id="tlf-sp" value="6" step="any" style="width:5em"></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<footer>Cross-coupled filter synthesis: coupling matrix realized with parallel LC resonators and C/L couplings.</footer>
+<script>
+(function(){
+const root=document.documentElement,q=id=>document.getElementById("tlf-"+id),$=id=>document.getElementById(id),PI=Math.PI;
+const sub=(x,y)=>[x[0]-y[0],x[1]-y[1]],mul=(x,y)=>[x[0]*y[0]-x[1]*y[1],x[0]*y[1]+x[1]*y[0]];
+const dv=(x,y)=>{const d=y[0]*y[0]+y[1]*y[1];return[(x[0]*y[0]+x[1]*y[1])/d,(x[1]*y[0]-x[0]*y[1])/d]};
+const db=z=>20*Math.log10(Math.max(Math.hypot(z[0],z[1]),1e-9));
+function solve(A,b){const n=b.length;A=A.map(r=>r.slice());b=b.slice();
+for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.hypot(...A[r][i])>Math.hypot(...A[p][i]))p=r;
+[A[i],A[p]]=[A[p],A[i]];[b[i],b[p]]=[b[p],b[i]];
+for(let r=i+1;r<n;r++){const f=dv(A[r][i],A[i][i]);for(let c=i;c<n;c++)A[r][c]=sub(A[r][c],mul(f,A[i][c]));b[r]=sub(b[r],mul(f,b[i]))}}
+const x=Array(n);for(let i=n-1;i>=0;i--){let s=b[i];for(let c=i+1;c<n;c++)s=sub(s,mul(A[i][c],x[c]));x[i]=dv(s,A[i][i])}return x}
+// Coupling-matrix response: A = R + jΩI − jM  ->  [S11, S21]
+function respM(M,qe,W){const n=M.length,R=1/qe;
+const A=M.map((row,i)=>row.map((m,j)=>i==j?[(i==0||i==n-1)?R:0,W]:[0,-m]));
+const b=M.map(()=>[0,0]);b[0]=[1,0];const x=solve(A,b);
+return[[1-2*R*x[0][0],-2*R*x[0][1]],mul([0,-2*R],x[n-1])]}
+const toOmega=(f,f0,fb)=>(f/f0-f0/f)/fb;
+const fOmega=(w,f0,fb)=>{const a=w*fb;return f0*(a+Math.sqrt(a*a+4))/2};
+const zeroPair=(w,f0,fb)=>{const up=fOmega(w,f0,fb);return[f0*f0/up,up]};
+function parseZeros(txt,f0,bw){
+const fb=bw/f0,fr=txt.split(/[;,\s]+/).filter(Boolean).map(Number);
+if(fr.some(f=>!(f>0)||!isFinite(f)))throw"Transmission zero frequencies must be positive numbers (MHz).";
+const w=fr.map(f=>{const o=Math.abs(toOmega(f,f0,fb));
+if(o<=1)throw"The zero at "+f+" MHz lies inside the passband (|Ω| = "+o.toFixed(2)+"). Zeros must satisfy |Ω| > 1.";return o}).sort((a,b)=>a-b);
+const g=[];w.forEach(o=>{const l=g[g.length-1];if(l&&o-l.s/l.k<0.01){l.s+=o;l.k++}else g.push({s:o,k:1})});
+const out=g.map(x=>x.s/x.k);
+if(out.length>4)throw"At most 4 distinct transmission-zero pairs are supported.";
+return out}
+function setup(n,cxs){const h=Math.floor(n/2),cls={};
+cxs.trim().split(/[;,\s]+/).filter(Boolean).forEach(s=>{let[i,j]=s.split("-").map(Number);if(!(i>=1&&j<=n&&j>i+1))throw"Invalid cross-coupling: "+s;
+const m=[n+1-j,n+1-i],k=[i,j].join()<m.join()?[i,j].join():m.join();(cls[k]=cls[k]||new Set()).add(i+"-"+j).add(m[0]+"-"+m[1])});
+return{h,cl:Object.values(cls).map(s=>[...s].map(t=>t.split("-").map(Number)))}}
+function build(p,n,S){const M=Array.from({length:n},()=>Array(n).fill(0));
+for(let i=1;i<n;i++)M[i-1][i]=M[i][i-1]=p[Math.min(i,n-i)-1];
+S.cl.forEach((c,k)=>c.forEach(([i,j])=>M[i-1][j-1]=M[j-1][i-1]=p[S.h+k]));return{M,qe:Math.abs(p[S.h+S.cl.length])}}
+function cheb(n,RL){const L=-10*Math.log10(1-Math.pow(10,-RL/10)),be=Math.log(1/Math.tanh(L/17.37)),ga=Math.sinh(be/(2*n)),g=[1];
+for(let k=1;k<=n;k++){const a=k=>Math.sin((2*k-1)*PI/(2*n)),b=k=>ga*ga+Math.pow(Math.sin(k*PI/n),2);
+g[k]=k==1?2*a(1)/ga:4*a(k-1)*a(k)/(b(k-1)*g[k-1])}return g}
+async function nm(f,x0,it){const n=x0.length;let S=[x0.slice()];for(let i=0;i<n;i++){const v=x0.slice();v[i]+=Math.abs(v[i])>1e-3?.2*v[i]:.05;S.push(v)}
+let F=S.map(f);for(let k=0;k<it;k++){if(k%40==0)await new Promise(r=>setTimeout(r));
+const o=F.map((_,i)=>i).sort((a,b)=>F[a]-F[b]);S=o.map(i=>S[i]);F=o.map(i=>F[i]);
+const c=S[0].map((_,j)=>S.slice(0,n).reduce((a,v)=>a+v[j],0)/n),pt=t=>c.map((v,j)=>v+t*(S[n][j]-v)),r=pt(-1),fr=f(r);
+if(fr<F[0]){const e=pt(-2),fe=f(e);if(fe<fr){S[n]=e;F[n]=fe}else{S[n]=r;F[n]=fr}}
+else if(fr<F[n-1]){S[n]=r;F[n]=fr}
+else{const qq=pt(fr<F[n]?-.5:.5),fq=f(qq);if(fq<Math.min(fr,F[n])){S[n]=qq;F[n]=fq}else for(let i=1;i<=n;i++){S[i]=S[i].map((v,j)=>S[0][j]+.5*(v-S[0][j]));F[i]=f(S[i])}}}
+const b=F.indexOf(Math.min(...F));return{x:S[b],f:F[b]}}
+async function synth(n,RL,cxs,zs){const S=setup(n,cxs),g=cheb(n,RL),W=[];for(let i=-20;i<=20;i++)W.push(i/20);
+const obj=p=>{const{M,qe}=build(p,n,S);if(qe<.5||qe>60)return 1e6;let e=0;
+for(const w of W){const d=Math.max(0,db(respM(M,qe,w)[0])+RL);e+=d*d}
+for(const w of[-1,1]){const d=db(respM(M,qe,w)[0])+RL;e+=.05*d*d}
+zs.forEach(z=>[-z,z].forEach(w=>{const s=respM(M,qe,w)[1];e+=300*(s[0]*s[0]+s[1]*s[1])}));return e};
+let best=null;out:for(const m of[.12,.25,.4])for(const sg of[-1,1]){
+const p0=[];for(let i=1;i<=S.h;i++)p0.push(1/Math.sqrt(g[i]*g[i+1]));S.cl.forEach(()=>p0.push(sg*m));p0.push(g[1]);
+let r=await nm(obj,p0,900);r=await nm(obj,r.x,900);if(!best||r.f<best.f)best=r;if(best.f<1e-3)break out}
+return{...build(best.x,n,S),err:best.f,S}}
+
+// LC realization (parallel resonators; capacitive coupling if M>0, inductive if M<0)
+function design(M,qe,f0,bw,Cr,R0){const n=M.length,w0=2*PI*f0,fb=bw/f0,Ge=Cr*w0*fb/qe;
+if(Ge*R0>=1)return{err:"Reference C is too large for this bandwidth: reduce C."};
+const x2=Ge*R0/(1-Ge*R0),Cs=Math.sqrt(x2)/(w0*R0),Cp=Cs/(1+x2),cp=[],C=[],L=[];
+for(let i=0;i<n;i++){let cs=(i==0||i==n-1)?Cp:0,ns=0;
+for(let j=0;j<n;j++){if(j==i||!M[i][j])continue;const m=M[i][j];if(m>0)cs+=m*fb*Cr;else ns+=-m*fb*Cr}
+C.push(Cr-cs);L.push(1/(w0*w0*(Cr-ns)))}
+for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const m=M[i][j];if(Math.abs(m)>1e-6)cp.push(m>0?{i,j,t:"C",v:m*fb*Cr}:{i,j,t:"L",v:1/(-m*fb*w0*w0*Cr)})}
+return{n,Cs,C,L,cp,f0,R0,Qu:0,bad:C.some(c=>c<=0)}}
+function simLC(d,f){const n=d.n,w=2*PI*f,Y=Array.from({length:n},()=>Array.from({length:n},()=>[0,0]));
+for(let i=0;i<n;i++){Y[i][i][0]+=d.Qu>0?1/(d.Qu*w*d.L[i]):0;Y[i][i][1]+=w*d.C[i]-1/(w*d.L[i])}
+d.cp.forEach(c=>{const y=c.t=="C"?[0,w*c.v]:[0,-1/(w*c.v)];Y[c.i][c.i][1]+=y[1];Y[c.j][c.j][1]+=y[1];Y[c.i][c.j][1]-=y[1];Y[c.j][c.i][1]-=y[1]});
+const zc=[0,-1/(w*d.Cs)],yi=dv([1,0],[d.R0+zc[0],zc[1]]);
+Y[0][0][0]+=yi[0];Y[0][0][1]+=yi[1];Y[n-1][n-1][0]+=yi[0];Y[n-1][n-1][1]+=yi[1];
+const b=Y.map(()=>[0,0]);b[0]=yi;const v=solve(Y,b),I=mul(yi,sub([1,0],v[0]));
+const vt=[v[0][0]+mul(I,dv([1,0],[0,w*d.Cs]))[0],v[0][1]+mul(I,dv([1,0],[0,w*d.Cs]))[1]];
+const s11=sub(vt,[d.R0*I[0],d.R0*I[1]]),vl=mul([d.R0,0],mul(yi,v[n-1]));return[s11,[2*vl[0],2*vl[1]]]}
+const f3=(v,s)=>(v*s).toPrecision(4);
+
+/* ---------- Qucs-S schematic export ---------- */
+function qv(v,u){
+  const P=[[1e-15,'f'],[1e-12,'p'],[1e-9,'n'],[1e-6,'u'],[1e-3,'m'],[1,''],[1e3,'k'],[1e6,'M'],[1e9,'G']];
+  let c=P[0];for(const x of P)if(Math.abs(v)>=x[0]*0.99995)c=x;
+  return `${+(v/c[0]).toFixed(2)} ${c[1]}${u}`;
+}
+// Nodes 0..n+1 sit on a horizontal bus: 0 = port 1, 1..n = resonators (shunt C and L), n+1 = port 2.
+// Port capacitors and adjacent couplings are series parts on the bus; cross-couplings are routed above it.
+function qucsSch(d,fa,fb){
+  const n=d.n,SPX=80;
+  const cap=(nm,v)=>({type:'C',name:nm,props:[[qv(v,'F'),1],['',0],['neutral',0]]}),ind=(nm,v)=>({type:'L',name:nm,props:[[qv(v,'H'),1],['',0]]});
+  const part=c=>c.t==='C'?cap(`Cc${c.i+1}${c.j+1}`,c.v):ind(`Lc${c.i+1}${c.j+1}`,c.v);
+  const pac=k=>({type:'Pac',name:'P'+k,props:[[String(k),1],[`${d.R0} Ohm`,1],['0 dBm',0],['1 GHz',0],['26.85',0]]});
+  const sh=k=>k===0?[pac(1)]:k===n+1?[pac(2)]:[cap('Cn'+k,d.C[k-1]),ind('Ln'+k,d.L[k-1])];
+  const cross=d.cp.filter(c=>c.j>c.i+1).sort((a,b)=>(a.j-a.i)-(b.j-b.i));
+  const BY=200+110*cross.length,xs=[],re=[],Cm=[],Wr=[];let x=120;
+  for(let k=0;k<=n+1;k++){xs[k]=x;re[k]=x+(sh(k).length-1)*SPX;x=re[k]+120;}
+  const wire=(x1,y1,x2,y2)=>{if(x1!==x2||y1!==y2)Wr.push(`<${x1} ${y1} ${x2} ${y2} "" 0 0 0 "">`);};
+  const comp=(type,name,cx,cy,tx,ty,rot,props)=>Cm.push(`<${type} ${name} 1 ${cx} ${cy} ${tx} ${ty} 0 ${rot} ${props.map(p=>`"${p[0]}" ${p[1]}`).join(' ')}>`);
+  for(let k=0;k<=n+1;k++){
+    sh(k).forEach((el,j)=>{
+      const sx=xs[k]+j*SPX;
+      if(j>0)wire(sx-SPX,BY,sx,BY);
+      wire(sx,BY,sx,BY+30);
+      comp(el.type,el.name,sx,BY+60,-26,55,1,el.props);
+      Cm.push(`<GND * 1 ${sx} ${BY+90} 0 0 0 0>`);
+    });
+    if(k<=n){
+      const c=(k>=1&&k<n)?d.cp.find(c=>c.i===k-1&&c.j===k):null;
+      const e=k===0||k===n?cap('Cs'+(k?2:1),d.Cs):(c?part(c):null);
+      if(e){const cx=re[k]+60;wire(re[k],BY,cx-30,BY);comp(e.type,e.name,cx,BY,-26,-45,0,e.props);wire(cx+30,BY,xs[k+1],BY);}
+    }
+  }
+  cross.forEach((c,idx)=>{
+    const y=BY-110-110*idx,xi=xs[c.i+1],xj=xs[c.j+1],cx=(xi+xj)/2,e=part(c);
+    wire(xi,BY,xi,y);wire(xi,y,cx-30,y);comp(e.type,e.name,cx,y,-26,-45,0,e.props);wire(cx+30,y,xj,y);wire(xj,y,xj,BY);
+  });
+  const SY=BY+230;
+  Cm.push(`<.SP SP1 1 120 ${SY} 0 67 0 0 "lin" 1 "${qv(fa,'Hz')}" 1 "${qv(fb,'Hz')}" 1 "601" 1 "no" 0 "1" 0 "2" 0 "yes" 0>`);
+  Cm.push(`<Eqn Eqn1 1 400 ${SY} -28 15 0 0 "S21_dB=dB(S[2,1])" 1 "S11_dB=dB(S[1,1])" 1 "yes" 0>`);
+  return `<Qucs Schematic 26.1.1>\n<Components>\n${Cm.join('\n')}\n</Components>\n<Wires>\n${Wr.join('\n')}\n</Wires>\n<Diagrams>\n</Diagrams>\n<Paintings>\n</Paintings>\n`;
+}
+
+let cur=null;
+function draw(){if(!cur)return;const cv=q("cv"),dp=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;if(!W||!H)return;cv.width=W*dp;cv.height=H*dp;
+const g=cv.getContext("2d");g.setTransform(dp,0,0,dp,0,0);const cs=getComputedStyle(root),col=k=>cs.getPropertyValue(k).trim();
+const L=52,R=14,T=10,B=46,x0=Math.max(cur.f0-cur.sp*cur.bw/2,cur.f0*.05),x1=cur.f0+cur.sp*cur.bw/2,YM=-80;
+const X=f=>L+(f-x0)/(x1-x0)*(W-L-R),Yf=v=>T+(Math.min(0,Math.max(YM,v))/YM)*(H-T-B);
+const C21="#e5262b",C11="#1f5fe0",muted=col("--muted");
+g.fillStyle=col("--card");g.fillRect(0,0,W,H);
+g.font="12px system-ui,sans-serif";g.lineWidth=1;g.strokeStyle=col("--grid");g.fillStyle=muted;g.textBaseline="middle";g.textAlign="right";
+for(let v=0;v>=YM;v-=10){const y=Math.round(Yf(v))+.5;g.beginPath();g.moveTo(L,y);g.lineTo(W-R,y);g.stroke();g.fillText(v,L-8,y)}
+g.textAlign="center";g.textBaseline="top";
+for(let k=0;k<=6;k++){const f=x0+k*(x1-x0)/6,x=Math.round(X(f))+.5;g.beginPath();g.moveTo(x,T);g.lineTo(x,H-B);g.stroke();g.fillText((f/1e6).toFixed(0),x,H-B+7)}
+g.fillStyle=col("--ink");g.font="600 13px system-ui,sans-serif";g.fillText("Frequency (MHz)",L+(W-L-R)/2,H-B+26);
+g.save();g.translate(14,T+(H-T-B)/2);g.rotate(-PI/2);g.textBaseline="middle";g.fillText("Magnitude (dB)",0,0);g.restore();
+g.fillStyle="rgba(120,140,135,.13)";g.fillRect(X(cur.f0-cur.bw/2),T,X(cur.f0+cur.bw/2)-X(cur.f0-cur.bw/2),H-T-B);
+g.save();g.strokeStyle=col("--warnink");g.globalAlpha=.7;g.lineWidth=1.2;g.setLineDash([2,3]);
+cur.zf.forEach(f=>{if(f>x0&&f<x1){g.beginPath();g.moveTo(X(f),T);g.lineTo(X(f),H-B);g.stroke()}});g.restore();
+const fb=cur.bw/cur.f0,pts=[];
+for(let k=0;k<=500;k++){const f=x0+k*(x1-x0)/500,a=respM(cur.M,cur.qe,toOmega(f,cur.f0,fb)),t=simLC(cur.d,f);pts.push([f,db(a[1]),db(a[0]),db(t[1]),db(t[0])])}
+g.save();g.beginPath();g.rect(L,T,W-L-R,H-T-B);g.clip();
+const tr=(ix,c,dash,lw)=>{g.beginPath();g.strokeStyle=c;g.lineWidth=lw;g.setLineDash(dash);pts.forEach((p,k)=>{const y=Yf(p[ix]);k?g.lineTo(X(p[0]),y):g.moveTo(X(p[0]),y)});g.stroke();g.setLineDash([])};
+tr(1,muted,[5,4],1.2);tr(2,muted,[5,4],1.2);tr(4,C11,[],2);tr(3,C21,[],2);g.restore()}
+
+/* Download link that does not rely on a scripted Blob click (works in embedded/sandboxed hosts) */
+function setQucsLink(){
+  let a=$("qucsLink");
+  if(!a){
+    a=document.createElement("a");a.id="qucsLink";a.className="btn btn-sm btn-outline-secondary";
+    a.textContent="Download link (right-click \u2192 Save link as\u2026)";
+    $("dlQucs").after(a);
+  }
+  a.href="data:text/plain;charset=utf-8,"+encodeURIComponent($("qucs").value);
+  a.download="cross_coupled_lc_filter.sch";
+}
+
+function run(){if(q("go").disabled)return;q("go").disabled=true;const st=q("st");st.style.color="var(--muted)";st.textContent="Optimizing…";
+setTimeout(async()=>{try{const v=id=>parseFloat(q(id).value.replace(",",".")),n=Math.round(v("n")),f0=v("f0"),bw=v("bw"),RL=v("rl"),Cr=v("cr")*1e-12,Qu=v("qu")||0,R0=v("r0"),sp=v("sp");
+if(!(n>=2&&n<=8))throw"The order must be between 2 and 8.";if(![f0,bw,RL,Cr,R0,sp].every(x=>x>0))throw"Please check the numeric values.";
+const fb=bw/f0,zs=parseZeros(q("zs").value,f0,bw);
+let r;if(q("md").value=="m"){const M=q("mm").value.trim().split(/\n+/).map(l=>l.trim().split(/[\s;]+/).map(x=>parseFloat(x.replace(",","."))));const k=M.length,qe=v("qe");
+if(k<2||k>8||M.some(z=>z.length!=k||z.some(isNaN)))throw"The matrix must be square (2-8) and numeric.";
+if(!(qe>0))throw"qe must be positive.";
+for(let i=0;i<k;i++){if(Math.abs(M[i][i])>1e-9)throw"The diagonal must be zero (synchronously tuned resonators).";for(let j=0;j<i;j++)if(Math.abs(M[i][j]-M[j][i])>1e-6)throw"The matrix must be symmetric (M"+(j+1)+","+(i+1)+").";}
+r={M,qe,err:null};q("n").value=k}
+else{r=await synth(n,RL,q("cx").value,zs);q("mm").value=r.M.map(row=>row.map(m=>Math.abs(m)<1e-6?"0":m.toFixed(5)).join(" ")).join("\n");q("qe").value=r.qe.toFixed(5)}
+const d=design(r.M,r.qe,f0*1e6,bw*1e6,Cr,R0);if(d.err)throw d.err;d.Qu=Qu;
+const zp=zs.map(w=>zeroPair(w,f0,fb));
+cur={M:r.M,qe:r.qe,d,f0:f0*1e6,bw:bw*1e6,sp,zf:zp.flat().map(f=>f*1e6)};
+let zh;if(!zs.length)zh="<p class='hint'>No transmission zeros specified.</p>";
+else{zh="<table class='table table-striped mono'><thead><tr><th>Pair</th><th>Lower (MHz)</th><th>Upper (MHz)</th><th>|Ω|</th><th>Ideal S21 (dB)</th><th>LC S21 @ lower (dB)</th><th>LC S21 @ upper (dB)</th></tr></thead><tbody>";
+zs.forEach((w,k)=>{const[lo,up]=zp[k];zh+=`<tr><td>${k+1}</td><td>${lo.toFixed(2)}</td><td>${up.toFixed(2)}</td><td>${w.toFixed(3)}</td><td>${db(respM(r.M,r.qe,w)[1]).toFixed(1)}</td><td>${db(simLC(d,lo*1e6)[1]).toFixed(1)}</td><td>${db(simLC(d,up*1e6)[1]).toFixed(1)}</td></tr>`});
+zh+="</tbody></table><p class='hint'>Mirror pairs satisfy f · f' = f0². The lower the S21 value at a zero, the deeper the null is at that frequency.</p>"}
+q("zt").innerHTML=zh;
+q("mt").innerHTML="<table class='table table-bordered mono'>"+r.M.map(row=>"<tr>"+row.map(m=>"<td>"+(Math.abs(m)<1e-6?"·":m.toFixed(4))+"</td>").join("")+"</tr>").join("")+"</table><p class='hint'>qe = "+r.qe.toFixed(4)+" (both ports). M &gt; 0: capacitive coupling; M &lt; 0: inductive coupling.</p>";
+let h="<table class='table table-striped mono'><thead><tr><th>Node</th><th>C to ground (pF)</th><th>L to ground (nH)</th></tr></thead><tbody>";
+d.C.forEach((c,i)=>h+=`<tr><td>${i+1}</td><td>${f3(c,1e12)}</td><td>${f3(d.L[i],1e9)}</td></tr>`);
+h+="</tbody></table><table class='table table-striped mono'><thead><tr><th>Coupling</th><th>Type</th><th>Value</th></tr></thead><tbody>";
+d.cp.forEach(c=>h+=`<tr><td>${c.i+1}-${c.j+1}</td><td>${c.t=="C"?"Capacitor":"Inductor"}</td><td>${f3(c.v,c.t=="C"?1e12:1e9)} ${c.t=="C"?"pF":"nH"}</td></tr>`);
+h+=`<tr><td>Ports</td><td>Series capacitor</td><td>${f3(d.Cs,1e12)} pF</td></tr></tbody></table>`;q("cp").innerHTML=h;
+const qa=Math.max(cur.f0-sp*cur.bw/2,cur.f0*.05),qb=cur.f0+sp*cur.bw/2;
+try{$("qucs").value=qucsSch(d,qa,qb)}catch(err){$("qucs").value="Qucs-S export failed: "+err.message}
+setQucsLink();
+draw();
+const over=r.S&&zs.length>r.S.cl.length;
+if(d.bad){st.textContent="Warning: a capacitor to ground is negative; increase the reference C.";st.style.color="var(--warnink)"}
+else if(over){st.textContent="Note: "+zs.length+" zero pair(s) requested but only "+r.S.cl.length+" independent cross-coupling(s); the result is a compromise. Check the zeros table.";st.style.color="var(--warnink)"}
+else{st.textContent=r.err==null?"Manual matrix simulated.":"Synthesis completed (residual error "+r.err.toExponential(1)+").";st.style.color="var(--okink)"}
+}catch(e){st.textContent=String(e);st.style.color="var(--warnink)"}finally{q("go").disabled=false}},30)}
+q("go").onclick=run;
+let raf=0;window.addEventListener("resize",()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(draw)});
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",draw);
+q("md").onchange=()=>{const m=q("md").value=="m";q("man").hidden=!m;q("auto").hidden=m;q("n").disabled=m;q("go").textContent=m?"Simulate matrix":"Synthesize and simulate"};
+q("pre").onchange=e=>{const[n,c,z]=e.target.value.split("|"),f0=parseFloat(q("f0").value)||1800,bw=parseFloat(q("bw").value)||60;
+q("md").value="a";q("md").onchange();q("n").value=n;q("cx").value=c;q("zs").value=zeroPair(Number(z),f0,bw/f0)[1].toFixed(2);run()};
+
+/* Dropdown: toggles an "open" class (host-CSS-proof) */
+$("simBtn").addEventListener("click",e=>{e.stopPropagation();$("simMenu").classList.toggle("open")});
+$("tlf").addEventListener("click",()=>$("simMenu").classList.remove("open"));
+document.addEventListener("click",()=>$("simMenu").classList.remove("open"));
+$("openQucs").addEventListener("click",()=>{$("qucsCard").scrollIntoView({behavior:"smooth",block:"nearest"})});
+
+$("dlQucs").addEventListener("click",()=>{
+  setQucsLink();
+  $("qucsLink").click();
+});
+$("copyQucs").addEventListener("click",async()=>{
+  const ta=$("qucs");ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);
+  let ok=false;
+  try{ok=document.execCommand("copy")}catch(_){}
+  if(!ok){try{await navigator.clipboard.writeText(ta.value);ok=true}catch(_){}}
+  $("copyQucs").textContent=ok?"Copied":"Selected: press Ctrl+C";
+  setTimeout(()=>$("copyQucs").textContent="Copy text",2500)});
+setTimeout(run,300);
+})();
+</script>
+</body>
+</html>

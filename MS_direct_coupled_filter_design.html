@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>RF Design Tools - Microstrip Bandpass Filter Design</title>
+<style>
+:root{
+  --bg:#ffffff; --ink:#212529; --muted:#6c757d; --card:#ffffff; --line:#dee2e6; --boxbg:#f8f9fa; --thead:#e9ecef;
+  --hover:#f1f3f5; --field:#ffffff; --primary:#0d6efd; --grid:#e6e6e6; --okink:#0f5132;
+  --warnbg:#fff3cd; --warnink:#664d03; --warnline:#ffecb5; --infobg:#cff4fc; --infoink:#055160; --stripe:#f6f8fa;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16191d; --ink:#e4e7ea; --muted:#9aa4ad; --card:#1e2227; --line:#343a40; --boxbg:#1a1e22; --thead:#2a2f35;
+    --hover:#262b31; --field:#14181c; --primary:#6ea8fe; --grid:#2f353b; --okink:#a3cfbb;
+    --warnbg:#332701; --warnink:#ffda6a; --warnline:#664d03; --infobg:#032830; --infoink:#6edff6; --stripe:#1c2025;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16191d; --ink:#e4e7ea; --muted:#9aa4ad; --card:#1e2227; --line:#343a40; --boxbg:#1a1e22; --thead:#2a2f35;
+  --hover:#262b31; --field:#14181c; --primary:#6ea8fe; --grid:#2f353b; --okink:#a3cfbb;
+  --warnbg:#332701; --warnink:#ffda6a; --warnline:#664d03; --infobg:#032830; --infoink:#6edff6; --stripe:#1c2025;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+h2,h5,p{margin:0}
+.btn{display:inline-block;font:400 16px/1.5 inherit;font-family:inherit;text-align:center;text-decoration:none;cursor:pointer;border:1px solid transparent;border-radius:.375rem;padding:.375rem .75rem;color:#212529;background:transparent;user-select:none}
+.btn-sm{font-size:14px;padding:.25rem .5rem;border-radius:.25rem}
+.btn-warning{background:#ffc107;border-color:#ffc107;color:#000}
+.btn-success{background:#198754;border-color:#198754;color:#fff}
+.btn-outline-secondary{color:var(--muted);border-color:var(--muted)}
+.btn-outline-secondary:hover{background:var(--muted);color:var(--bg)}
+.btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+.container-fluid{padding:12px 16px 32px}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.tool-name{font-size:2rem;font-weight:500;line-height:1.2;margin:6px 0 10px}
+.box_form{flex:0 0 auto;width:370px;max-width:100%;padding:10px;background:var(--boxbg);border:1px solid var(--line);border-radius:.375rem}
+.box_form.right{width:330px}
+.box{flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:14px}
+@media (max-width:1180px){.box_form,.box_form.right{width:100%}}
+.box_form h5{text-align:center;font-size:1.25rem;font-weight:500;margin:4px 0 8px}
+.table{width:100%;border-collapse:collapse;margin-bottom:12px;color:var(--ink)}
+.table th,.table td{padding:.4rem .5rem;border-bottom:1px solid var(--line);vertical-align:middle;text-align:left}
+.rf_table_style thead td{background:var(--thead);font-weight:600}
+.table-hover tbody tr:hover{background:var(--hover)}
+.table-striped tbody tr:nth-child(odd){background:var(--stripe)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
+input[type=number],select{font:inherit;font-size:15px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:.25rem;padding:.2rem .35rem;max-width:100%}
+select{padding:.25rem .3rem}
+select.wide{width:100%}
+small.hint,.hint{display:block;color:var(--muted);font-size:12.5px;margin:3px 0 0}
+[hidden]{display:none!important}
+.card{background:var(--card);border:1px solid var(--line);border-radius:.375rem}
+.shadow-sm{box-shadow:0 .125rem .25rem rgba(0,0,0,.075)}
+.card-body{padding:12px 16px 6px}
+.card-title{font-size:1.25rem;font-weight:500;margin:0 0 6px}
+.card-text{padding:0 12px 12px}
+.chart-wrap{padding:8px 8px 4px}
+#plot{display:block;width:100%;touch-action:pan-y}
+.alert{padding:.6rem .9rem;border:1px solid;border-radius:.375rem;font-size:14.5px;margin-bottom:8px}
+.alert-warning{background:var(--warnbg);color:var(--warnink);border-color:var(--warnline)}
+.alert-info{background:var(--infobg);color:var(--infoink);border-color:transparent}
+#alerts .alert:last-child{margin-bottom:0}
+.tl-dd{position:relative;display:inline-block}
+.tl-dd-menu{display:none!important;position:absolute;left:0;top:100%;min-width:12rem;background:var(--card);border:1px solid var(--line);border-radius:.375rem;padding:.35rem 0;margin-top:2px;z-index:20;box-shadow:0 .5rem 1rem rgba(0,0,0,.15)}
+.tl-dd-menu.open{display:block!important}
+.tl-dd-item{display:block;width:100%;text-align:left;background:none;border:0;padding:.35rem 1rem;color:var(--ink);font:inherit;cursor:pointer}
+.tl-dd-item:hover{background:var(--hover)}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0}
+textarea{width:100%;min-height:220px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:.25rem;padding:8px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin:0}
+.sum div{padding:6px 16px 10px}
+.sum dt{font-size:13px;color:var(--muted)}
+.sum dd{margin:0;font:500 16px ui-monospace,Menlo,Consolas,monospace}
+.sc{overflow-x:auto}
+ul.plain{margin:4px 0 0;padding-left:1.1rem;font-size:14px}
+#st{min-height:1.4em;font-size:14px;margin:6px 0}
+footer{text-align:center;color:var(--muted);font-size:14px;padding:8px 0 16px}
+.lgd{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);padding:0 12px 10px}
+.lgd i{display:inline-block;width:12px;height:12px;vertical-align:middle;margin-right:5px;border-radius:2px}
+</style>
+</head>
+<body>
+<div class="container-fluid" id="tlf">
+  <div class="row"><h2 class="tool-name">Microstrip Bandpass Filter Design</h2></div>
+  <div class="row">
+
+    <div class="box_form" id="leftForm">
+      <h5>Filter Type</h5>
+      <table class="rf_table_style table table-hover">
+        <thead><tr><td>Parameter</td><td>Value</td></tr></thead>
+        <tbody>
+          <tr><td>Topology</td><td><select id="topo" class="wide">
+            <option value="side">Side-coupled (parallel-coupled)</option>
+            <option value="hair">Hairpin</option>
+            <option value="comb">Combline</option>
+            <option value="inter">Interdigital</option>
+            <option value="gap">End-coupled (gap capacitors)</option></select></td></tr>
+          <tr><td>Response</td><td><select id="resp"><option value="cheb" selected>Chebyshev</option><option value="butter">Butterworth</option></select></td></tr>
+          <tr class="rp"><td>Ripple (dB)</td><td><input type="number" id="rip" value="0.1" step="0.05" min="0.001" max="3" style="width:5em"></td></tr>
+          <tr><td>Order N (2–9)</td><td><input type="number" id="N" value="3" min="2" max="9" step="1" style="width:4em"></td></tr>
+          <tr><td>f<sub>0</sub> (MHz)</td><td><input type="number" id="f0" value="2000" step="any" style="width:6em"></td></tr>
+          <tr><td>Bandwidth (MHz)</td><td><input type="number" id="bw" value="200" step="any" style="width:6em"></td></tr>
+          <tr><td>Port impedance (&Omega;)</td><td><input type="number" id="z0" value="50" style="width:4em"></td></tr>
+          <tr class="zr"><td>Resonator line Z<sub>r</sub> (&Omega;)</td><td><input type="number" id="zr" value="60" step="any" style="width:5em"><small class="hint">Sets the line width of the resonators (isolated line).</small></td></tr>
+          <tr class="th"><td>Line length &theta;<sub>0</sub> (&deg;)</td><td><input type="number" id="thd" value="50" step="1" style="width:4em"><small class="hint">Electrical length of the shorted resonators at f<sub>0</sub> (typically 30–60°).</small></td></tr>
+          <tr class="bd"><td>Hairpin base angle (&deg;)</td><td><input type="number" id="bd" value="40" step="1" style="width:4em"><small class="hint">Electrical length of the U base at f<sub>0</sub>. Larger = arms farther apart.</small></td></tr>
+        </tbody>
+      </table>
+      <div class="alert alert-info" id="note" style="font-size:13px"></div>
+      <div id="st" role="status"></div>
+      <div class="btn-row">
+        <button class="btn btn-success" type="button" id="go">Design and simulate</button>
+        <div class="tl-dd">
+          <button class="btn btn-warning" type="button" id="simBtn">Simulation Files &#9662;</button>
+          <div class="tl-dd-menu" id="simMenu">
+            <button class="tl-dd-item" type="button" id="openQucs">Qucs-S schematic (.sch)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="card shadow-sm"><div class="chart-wrap"><canvas id="plot" aria-label="Simulated filter response"></canvas></div>
+        <dl class="sum" id="sum"></dl></div>
+      <div id="alerts"></div>
+      <div class="card"><div class="card-body"><h5 class="card-title">Dimensions</h5></div><div class="card-text sc" id="dims"></div></div>
+      <div class="card"><div class="card-body"><h5 class="card-title">Layout (top view)</h5></div>
+        <div class="card-text"><div id="layout"></div><p class="hint" id="lsize"></p>
+          <div class="lgd"><span><i style="background:#b87333"></i>Resonator / line</span><span><i style="background:#d9a441"></i>50 &Omega; feed</span><span><i style="background:#2f6fdb"></i>Loading capacitor pad</span><span><i style="background:#8a8f98"></i>Ground / via</span></div></div></div>
+      <div class="card" id="qucsCard"><div class="card-body"><h5 class="card-title">Qucs-S Schematic</h5></div>
+        <div class="card-text"><textarea id="qucs" readonly spellcheck="false"></textarea>
+          <div class="btn-row"><button class="btn btn-sm btn-success" type="button" id="dlQucs">Download .sch</button><button class="btn btn-sm btn-outline-secondary" type="button" id="copyQucs">Copy text</button></div>
+          <p class="hint" id="qucsNote"></p>
+          <p class="hint">If the buttons are blocked by the host app, click in the box, press Ctrl+A then Ctrl+C, and save the text as a .sch file. Components are placed and wired in the same arrangement as the physical layout (staggered sections for side-coupled, vertical U arms for hairpin, in-line chain for gap-coupled).</p></div></div>
+    </div>
+
+    <div class="box_form right" id="rightForm">
+      <h5>Substrate</h5>
+      <table class="rf_table_style table">
+        <thead><tr><td>Parameter</td><td>Value</td></tr></thead>
+        <tbody>
+          <tr><td>&epsilon;<sub>r</sub></td><td><input type="number" id="er" value="3.38" step="any" style="width:5em"></td></tr>
+          <tr><td>Height h (mm)</td><td><input type="number" id="h" value="0.508" step="any" style="width:5em"></td></tr>
+          <tr><td>Copper t (&micro;m)</td><td><input type="number" id="tm" value="35" step="any" style="width:5em"><small class="hint">Used only in the Qucs-S export (the field solver assumes zero thickness).</small></td></tr>
+          <tr><td>tan &delta;</td><td><input type="number" id="td" value="0.0027" step="any" style="width:6em"></td></tr>
+          <tr><td>Line Q (0 = lossless)</td><td><input type="number" id="qu" value="0" step="any" style="width:5em"><small class="hint">Unloaded Q applied to every line.</small></td></tr>
+        </tbody>
+      </table>
+      <h5>Simulation Parameters</h5>
+      <table class="rf_table_style table">
+        <thead><tr><td>Parameter</td><td>Value</td></tr></thead>
+        <tbody>
+          <tr><td>Span (&times; BW)</td><td><input type="number" id="sp" value="6" step="any" style="width:5em"></td></tr>
+          <tr><td>Re-centre passband</td><td><label><input type="checkbox" id="tune" checked> Tune lengths / capacitors</label><small class="hint">Scales the resonator lengths (or loading capacitors) so the &minus;3 dB band is centred on f<sub>0</sub>.</small></td></tr>
+          <tr><td>Optimize taps</td><td><label><input type="checkbox" id="refine" checked> Refine feed taps</label><small class="hint">Hairpin, combline and interdigital: adjusts the tap height for best in-band return loss.</small></td></tr>
+          <tr><td>Ideal prototype</td><td><label><input type="checkbox" id="ideal" checked> Overlay</label></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<footer>Quasi-static microstrip field solver (zero thickness, no dispersion) with coupled-line and multiconductor circuit simulation. Verify with EM simulation before fabrication.</footer>
+<script>
+(function(){
+/* ===== Microstrip quasi-static solver (method of moments, zero thickness) ===== */
+const PI=Math.PI, C0=299792458, ETA0=376.730313668;
+const Fl=u=>u===0?0:u*Math.log(Math.abs(u))-u;
+const Fd=(u,d)=>0.5*(u*Math.log(u*u+d*d)-2*u+2*d*Math.atan(u/d));
+function kernelSet(er,h){
+  const K=(er-1)/(er+1),co=[];let p=1;
+  for(let n=1;n<=400;n++){co.push((1+K)*p);p*=-K;if(Math.abs(p)<1e-8)break}
+  return{pref:1/(PI*(1+er)),co,h};
+}
+function cellPot(ks,x,a,b){
+  let s=-(Fl(b-x)-Fl(a-x));
+  for(let n=0;n<ks.co.length;n++){const d=2*(n+1)*ks.h;s+=ks.co[n]*(Fd(b-x,d)-Fd(a-x,d))}
+  return s*ks.pref;
+}
+function mesh(xl,W,M){
+  const x=[];for(let k=0;k<=M;k++)x.push(xl+W*(1-Math.cos(PI*k/M))/2);
+  const c=[];for(let k=0;k<M;k++)c.push({a:x[k],b:x[k+1],c:(x[k]+x[k+1])/2,w:x[k+1]-x[k]});
+  return c;
+}
+function lsolve(A,b){
+  const n=b.length;A=A.map(r=>r.slice());b=b.slice();
+  for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;
+    [A[i],A[p]]=[A[p],A[i]];[b[i],b[p]]=[b[p],b[i]];
+    for(let r=i+1;r<n;r++){const f=A[r][i]/A[i][i];if(f)for(let c=i;c<n;c++)A[r][c]-=f*A[i][c];b[r]-=f*b[i]}}
+  const x=Array(n);for(let i=n-1;i>=0;i--){let s=b[i];for(let c=i+1;c<n;c++)s-=A[i][c]*x[c];x[i]=s/A[i][i]}
+  return x;
+}
+const MC=14;
+// capacitances (relative to eps0, per strip) in units where substrate height h = 1
+const csCache={};
+function capSingle(W,er){const key=W.toFixed(6)+'/'+er;return csCache[key]||(csCache[key]=capSingle0(W,er))}
+function capSingle0(W,er){
+  const ks=kernelSet(er,1),cl=mesh(-W/2,W,MC),n=cl.length;
+  const A=cl.map(ci=>cl.map(cj=>cellPot(ks,ci.c,cj.a,cj.b)));
+  const s=lsolve(A,Array(n).fill(1));return s.reduce((a,v,j)=>a+v*cl[j].w,0);
+}
+function capPair(W,S,er){
+  const ks=kernelSet(er,1),cl=mesh(-S/2-W,W,MC),n=cl.length;
+  const As=cl.map(ci=>cl.map(cj=>cellPot(ks,ci.c,cj.a,cj.b)));
+  const Ac=cl.map(ci=>cl.map(cj=>cellPot(ks,ci.c,-cj.b,-cj.a)));
+  const out=[];
+  for(const sg of[1,-1]){
+    const A=As.map((r,i)=>r.map((v,j)=>v+sg*Ac[i][j]));
+    const s=lsolve(A,Array(n).fill(1));out.push(s.reduce((a,v,j)=>a+v*cl[j].w,0));
+  }
+  return{Ce:out[0],Co:out[1]};
+}
+// W,S in units of h
+function anaSingle(W,er){
+  const C=capSingle(W,er),Ca=capSingle(W,1);
+  return{Z:ETA0/Math.sqrt(C*Ca),ee:C/Ca,C,Ca};
+}
+function anaPair(W,S,er){
+  const a=capPair(W,S,er),b=capPair(W,S,1);
+  return{Ze:ETA0/Math.sqrt(a.Ce*b.Ce),Zo:ETA0/Math.sqrt(a.Co*b.Co),ee:a.Ce/b.Ce,eo:a.Co/b.Co,Ce:a.Ce,Co:a.Co,Cae:b.Ce,Cao:b.Co};
+}
+const LW0=Math.log(0.02),LW1=Math.log(40);
+function widthForZ(Z,er){
+  let lo=LW0,hi=LW1;
+  for(let i=0;i<46;i++){const m=(lo+hi)/2;if(anaSingle(Math.exp(m),er).Z>Z)lo=m;else hi=m}
+  const W=Math.exp((lo+hi)/2),a=anaSingle(W,er);
+  return{W,Z:a.Z,ee:a.ee,ok:Math.abs(a.Z-Z)/Z<2e-3};
+}
+function pairForZ(Ze,Zo,er){
+  if(!(Ze>Zo))return{ok:false};
+  const Z0=Math.sqrt(Ze*Zo);let best=null;
+  for(const s0 of[0.3,1,0.1,3]){
+    let u=Math.log(widthForZ(Z0,er).W),v=Math.log(s0),r=null;
+    const res=(u,v)=>{const a=anaPair(Math.exp(u),Math.exp(v),er);return[Math.log(a.Ze/Ze),Math.log(a.Zo/Zo)]};
+    let f=res(u,v),nf=Math.hypot(...f);
+    for(let it=0;it<40&&nf>1e-5;it++){
+      const e=1e-3,fu=res(u+e,v),fv=res(u,v+e);
+      const J=[[(fu[0]-f[0])/e,(fv[0]-f[0])/e],[(fu[1]-f[1])/e,(fv[1]-f[1])/e]];
+      const det=J[0][0]*J[1][1]-J[0][1]*J[1][0];if(!isFinite(det)||Math.abs(det)<1e-12)break;
+      let du=-( J[1][1]*f[0]-J[0][1]*f[1])/det,dv=-(-J[1][0]*f[0]+J[0][0]*f[1])/det;
+      let t=1,ok=false;
+      for(let k=0;k<8;k++){
+        const un=Math.min(LW1,Math.max(LW0,u+t*du)),vn=Math.min(LW1,Math.max(LW0,v+t*dv)),fn=res(un,vn),nn=Math.hypot(...fn);
+        if(nn<nf){u=un;v=vn;f=fn;nf=nn;ok=true;break}t/=2}
+      if(!ok)break;
+    }
+    if(!best||nf<best.nf){const a=anaPair(Math.exp(u),Math.exp(v),er);best={nf,W:Math.exp(u),S:Math.exp(v),a}}
+    if(nf<1e-4)break;
+  }
+  return{ok:best.nf<5e-3,W:best.W,S:best.S,ee:best.a.ee,eo:best.a.eo,Ze:best.a.Ze,Zo:best.a.Zo,err:best.nf};
+}
+// Hammerstad open-end length extension (same units as h)
+function openExt(u,ee){return 0.412*(ee+0.3)/(ee-0.258)*(u+0.264)/(u+0.8)}
+// Garg-Bahl gap capacitances; W,S in mm, returns farads
+function gapCaps(W,S,h,er){
+  const u=W/h,s=S/W,Wm=W*1e-3;
+  const mo=u*(0.619*Math.log10(u)-0.3853),ko=4.26-1.453*Math.log10(u);
+  let me,ke;if(s<=0.3){me=0.8675;ke=2.043*Math.pow(u,0.12)}else{me=1.565/Math.pow(u,0.16)-1;ke=1.97-0.03/u}
+  const Co=Math.pow(s,mo)*Math.exp(ko)*Math.pow(er/9.6,0.8)*Wm*1e-12;
+  const Ce=12*Math.pow(s,me)*Math.exp(ke)*Math.pow(er/9.6,0.9)*Wm*1e-12;
+  return{Cg:0.5*Co-0.25*Ce,Cp:0.5*Ce};
+}
+/* ===== prototype ===== */
+function protoG(type,N,Lar){
+  const g=[1];
+  if(type==='butter'){for(let k=1;k<=N;k++)g[k]=2*Math.sin((2*k-1)*PI/(2*N));g[N+1]=1;return g}
+  const beta=Math.log(1/Math.tanh(Lar/17.37)),gam=Math.sinh(beta/(2*N)),a=[],b=[];
+  for(let k=1;k<=N;k++){a[k]=Math.sin((2*k-1)*PI/(2*N));b[k]=gam*gam+Math.pow(Math.sin(k*PI/N),2)}
+  g[1]=2*a[1]/gam;for(let k=2;k<=N;k++)g[k]=4*a[k-1]*a[k]/(b[k-1]*g[k-1]);
+  g[N+1]=(N%2===1)?1:Math.pow(1/Math.tanh(beta/4),2);return g;
+}
+function idealDB(p,f){
+  const w=p.FBW,Om=(f/p.f0-p.f0/f)/w,N=p.N;let v;
+  if(p.resp==='butter')v=1/(1+Math.pow(Math.abs(Om),2*N));
+  else{const e2=Math.pow(10,p.rip/10)-1,a=Math.abs(Om);const T=a<=1?Math.cos(N*Math.acos(a)):Math.cosh(N*Math.acosh(a));v=1/(1+e2*T*T)}
+  return{s21:10*Math.log10(Math.max(v,1e-12)),s11:10*Math.log10(Math.max(1-v,1e-12))};
+}
+/* ===== nodal circuit simulator ===== */
+// complex hyperbolics for gamma = a + j b
+function hyp(a,b){const ea=Math.exp(a),ei=1/ea,sh=(ea-ei)/2,ch=(ea+ei)/2,cb=Math.cos(b),sb=Math.sin(b);
+  return{sr:sh*cb,si:ch*sb,cr:ch*cb,ci:sh*sb}}
+function cdiv(ar,ai,br,bi){const d=br*br+bi*bi;return[(ar*br+ai*bi)/d,(ai*br-ar*bi)/d]}
+function csolve(n,Ar,Ai,br,bi){
+  for(let i=0;i<n;i++){
+    let p=i,m=Ar[i*n+i]**2+Ai[i*n+i]**2;
+    for(let r=i+1;r<n;r++){const v=Ar[r*n+i]**2+Ai[r*n+i]**2;if(v>m){m=v;p=r}}
+    if(p!==i){for(let c=0;c<n;c++){let t=Ar[i*n+c];Ar[i*n+c]=Ar[p*n+c];Ar[p*n+c]=t;t=Ai[i*n+c];Ai[i*n+c]=Ai[p*n+c];Ai[p*n+c]=t}
+      let t=br[i];br[i]=br[p];br[p]=t;t=bi[i];bi[i]=bi[p];bi[p]=t}
+    const pr=Ar[i*n+i],pi=Ai[i*n+i],pd=pr*pr+pi*pi;
+    for(let r=i+1;r<n;r++){
+      const xr=Ar[r*n+i],xi=Ai[r*n+i];if(xr===0&&xi===0)continue;
+      const fr=(xr*pr+xi*pi)/pd,fi=(xi*pr-xr*pi)/pd;
+      for(let c=i;c<n;c++){const yr=Ar[i*n+c],yi=Ai[i*n+c];Ar[r*n+c]-=fr*yr-fi*yi;Ai[r*n+c]-=fr*yi+fi*yr}
+      br[r]-=fr*br[i]-fi*bi[i];bi[r]-=fr*bi[i]+fi*br[i];
+    }
+  }
+  for(let i=n-1;i>=0;i--){
+    let sr=br[i],si=bi[i];
+    for(let c=i+1;c<n;c++){sr-=Ar[i*n+c]*br[c]-Ai[i*n+c]*bi[c];si-=Ar[i*n+c]*bi[c]+Ai[i*n+c]*br[c]}
+    const q=cdiv(sr,si,Ar[i*n+i],Ai[i*n+i]);br[i]=q[0];bi[i]=q[1];
+  }
+}
+// ckt: {n (nodes excl. ground), els, p1, p2, f0, Q, Z0}
+// elements: tl{a,b,Y,th} sh{a,Y,th,open} cap{a,b,C} cpl{n:[a1,a2,b1,b2],Ye,Yo,the,tho} mtl{A,B,Ym,th}
+function makeSim(ck){
+  const n=ck.n,Ar=new Float64Array(n*n),Ai=new Float64Array(n*n),br=new Float64Array(n),bi=new Float64Array(n);
+  const G=1/ck.Z0,Q=ck.Q>0?1/(2*ck.Q):0;
+  return function(f){
+    Ar.fill(0);Ai.fill(0);br.fill(0);bi.fill(0);
+    const r=f/ck.f0,w=2*PI*f;
+    const add=(i,j,yr,yi)=>{if(i>0&&j>0){Ar[(i-1)*n+j-1]+=yr;Ai[(i-1)*n+j-1]+=yi}};
+    const gam=th=>{const b=th*r;return hyp(Q*b,b)};
+    for(const e of ck.els){
+      switch(e.t){
+        case'tl':{const h=gam(e.th),c=cdiv(h.cr,h.ci,h.sr,h.si),d=cdiv(-1,0,h.sr,h.si);
+          const y11=[e.Y*c[0],e.Y*c[1]],y12=[e.Y*d[0],e.Y*d[1]];
+          add(e.a,e.a,...y11);add(e.b,e.b,...y11);add(e.a,e.b,...y12);add(e.b,e.a,...y12);break}
+        case'sh':{const h=gam(e.th),c=e.open?cdiv(h.sr,h.si,h.cr,h.ci):cdiv(h.cr,h.ci,h.sr,h.si);add(e.a,e.a,e.Y*c[0],e.Y*c[1]);break}
+        case'cap':{const y=w*e.C;add(e.a,e.a,0,y);if(e.b){add(e.b,e.b,0,y);add(e.a,e.b,0,-y);add(e.b,e.a,0,-y)}break}
+        case'cpl':{
+          const he=gam(e.the),ho=gam(e.tho),ce=cdiv(he.cr,he.ci,he.sr,he.si),de=cdiv(-1,0,he.sr,he.si),co=cdiv(ho.cr,ho.ci,ho.sr,ho.si),dO=cdiv(-1,0,ho.sr,ho.si);
+          for(let k=0;k<4;k++)for(let m=0;m<4;m++){
+            const same=(k>>1)===(m>>1),se=(k&1)===(m&1),s=same?1:-1;
+            const Ye=se?[e.Ye*ce[0],e.Ye*ce[1]]:[e.Ye*de[0],e.Ye*de[1]],Yo=se?[e.Yo*co[0],e.Yo*co[1]]:[e.Yo*dO[0],e.Yo*dO[1]];
+            add(e.n[k],e.n[m],0.5*(Ye[0]+s*Yo[0]),0.5*(Ye[1]+s*Yo[1]));
+          }break}
+        case'mtl':{
+          const h=gam(e.th),c=cdiv(h.cr,h.ci,h.sr,h.si),d=cdiv(-1,0,h.sr,h.si),N=e.A.length;
+          for(let i=0;i<N;i++)for(let j=0;j<N;j++){const y=e.Ym[i][j];if(!y)continue;
+            add(e.A[i],e.A[j],y*c[0],y*c[1]);add(e.B[i],e.B[j],y*c[0],y*c[1]);
+            add(e.A[i],e.B[j],y*d[0],y*d[1]);add(e.B[i],e.A[j],y*d[0],y*d[1])}
+          break}
+      }
+    }
+    add(ck.p1,ck.p1,G,0);add(ck.p2,ck.p2,G,0);
+    br[ck.p1-1]=2*G;
+    csolve(n,Ar,Ai,br,bi);
+    return[[br[ck.p1-1]-1,bi[ck.p1-1]],[br[ck.p2-1],bi[ck.p2-1]]];
+  };
+}
+const dBc=z=>20*Math.log10(Math.max(Math.hypot(z[0],z[1]),1e-9));
+/* passband centre: geometric mean of the -3 dB edges around the peak */
+function bandCentre(sim,p){
+  const fa=p.f0*Math.max(0.3,1-2.5*p.FBW),fb=p.f0*(1+2.5*p.FBW),K=320,v=[],fr=[];
+  for(let k=0;k<=K;k++){const f=fa+(fb-fa)*k/K;fr.push(f);v.push(dBc(sim(f)[1]))}
+  let im=0;for(let k=1;k<=K;k++)if(v[k]>v[im])im=k;
+  const th=v[im]-3-(p.resp==='cheb'?p.rip:0);
+  let l=im;while(l>0&&v[l]>=th)l--;let r=im;while(r<K&&v[r]>=th)r++;
+  if(l===0||r===K)return fr[im];
+  const fl=fr[l]+(fr[l+1]-fr[l])*(th-v[l])/(v[l+1]-v[l]),fh=fr[r-1]+(fr[r]-fr[r-1])*(th-v[r-1])/(v[r]-v[r-1]);
+  return Math.sqrt(fl*fh);
+}
+
+/* ===== helpers ===== */
+const lamQ=(f0,ee)=>C0/(4*f0*Math.sqrt(ee))*1000;            // quarter wave (mm)
+const angOf=(Lmm,f0,ee)=>2*PI*f0*(Lmm/1000)*Math.sqrt(ee)/C0;   // electrical angle (rad)
+const lenOf=(th,f0,ee)=>th*C0/(2*PI*f0*Math.sqrt(ee))*1000;     // mm
+function solveMono(fn,target,lo,hi,tol=3e-4,maxit=40){
+  let fl=fn(lo)-target,fh=fn(hi)-target;
+  if(fl*fh>0)return{x:Math.abs(fl)<Math.abs(fh)?lo:hi,ok:false};
+  let a=lo,b=hi,side=0,x=lo;
+  for(let i=0;i<maxit;i++){
+    x=(a*fh-b*fl)/(fh-fl);const fx=fn(x)-target;
+    if(Math.abs(fx)<tol)return{x,ok:true};
+    if(fx*fl<0){b=x;fh=fx;if(side===-1)fl/=2;side=-1}else{a=x;fl=fx;if(side===1)fh/=2;side=1}
+  }
+  return{x,ok:Math.abs(fn(x)-target)<10*tol};
+}
+function resRoot(fun,r0,r1){
+  const K=360;let prev=fun(r0),rp=r0;const roots=[];
+  for(let k=1;k<=K;k++){const r=r0+(r1-r0)*k/K,v=fun(r);
+    if(prev*v<0){let a=rp,b=r,fa=prev;for(let i=0;i<50;i++){const m=(a+b)/2,fm=fun(m);if(fa*fm<=0)b=m;else{a=m;fa=fm}}
+      const rm=(a+b)/2;if(Math.abs(fun(rm))<1e-3)roots.push(rm)}
+    prev=v;rp=r}
+  if(!roots.length)return NaN;
+  return roots.reduce((p,c)=>Math.abs(c-1)<Math.abs(p-1)?c:p);
+}
+const pairCache={},hairCache={},mtlCache={};
+function pairZ(Ze,Zo,er){const key=Ze.toFixed(3)+'/'+Zo.toFixed(3)+'/'+er;return pairCache[key]||(pairCache[key]=pairForZ(Ze,Zo,er))}
+const lwCache={};
+function lineW(Z,p){const key=Z.toFixed(4)+'/'+p.er;const r=lwCache[key]||(lwCache[key]=widthForZ(Z,p.er));return{Wh:r.W,W:r.W*p.h,ee:r.ee,ok:r.ok}}
+const RC=(x0,y0,x1,y1,c)=>({x0:Math.min(x0,x1),x1:Math.max(x0,x1),y0:Math.min(y0,y1),y1:Math.max(y0,y1),c:c||'cu'});
+function invVals(slope,g,w,T){
+  const N=g.length-2,o=[];
+  o[0]=Math.sqrt(T*slope[1]*w/(g[0]*g[1]));
+  for(let i=1;i<N;i++)o[i]=w*Math.sqrt(slope[i]*slope[i+1]/(g[i]*g[i+1]));
+  o[N]=Math.sqrt(T*slope[N]*w/(g[N]*g[N+1]));
+  return o;
+}
+const MLINp=(W,L)=>[['Subst1',0],[W+' mm',1],[L.toFixed(3)+' mm',1],['Hammerstad',0],['Kirschning',0],['26.85',0]];
+const MOPENp=W=>[['Subst1',0],[W+' mm',1],['Hammerstad',0],['Kirschning',0],['Kirschning',0]];
+
+/* ======== 1. Side-coupled (parallel-coupled half-wave) ======== */
+function designSide(p){
+  const g=protoG(p.resp,p.N,p.rip),warn=[],N=p.N,w=p.FBW,Z0=p.Z0,secs=[];
+  const J=[];J[0]=Math.sqrt(PI*w/(2*g[0]*g[1]));
+  for(let i=1;i<N;i++)J[i]=PI*w/(2*Math.sqrt(g[i]*g[i+1]));
+  J[N]=Math.sqrt(PI*w/(2*g[N]*g[N+1]));
+  for(let k=0;k<=N;k++){
+    const jn=J[k],Ze=Z0*(1+jn+jn*jn),Zo=Z0*(1-jn+jn*jn),pr=pairZ(Ze,Zo,p.er);
+    if(!pr.ok)warn.push(`Section ${k+1}: Z0e/Z0o = ${Ze.toFixed(1)}/${Zo.toFixed(1)} Ω is not realizable on this substrate (residual ${(pr.err*100).toFixed(1)} %). Try a higher εr, a thinner substrate or a narrower band.`);
+    const eref=Math.pow((Math.sqrt(pr.ee)+Math.sqrt(pr.eo))/2,2),Lel=lamQ(p.f0,eref),Sm=pr.S*p.h,Wm=pr.W*p.h;
+    if(Sm<0.1)warn.push(`Section ${k+1}: gap ${Sm.toFixed(3)} mm is below typical fabrication limits.`);
+    secs.push({Ze,Zo,W:Wm,S:Sm,ee:pr.ee,eo:pr.eo,Lel,dl:openExt(pr.W,eref)*p.h,the:angOf(Lel,p.f0,pr.ee),tho:angOf(Lel,p.f0,pr.eo)});
+  }
+  const build=s=>{
+    let id=1;const els=[];let prev=id;const p1=prev;
+    secs.forEach(c=>{const ao=++id,bo=++id,bj=++id;
+      els.push({t:'cpl',n:[prev,ao,bo,bj],Ye:1/c.Ze,Yo:1/c.Zo,the:c.the*s,tho:c.tho*s});prev=bj});
+    return{n:id,els,p1,p2:prev,f0:p.f0,Q:p.Q,Z0};
+  };
+  const Lp=(c,s)=>Math.max(c.Lel*s-c.dl,0.05);
+  const rows=s=>secs.map((c,k)=>[`Section ${k+1}`,c.Ze.toFixed(1),c.Zo.toFixed(1),c.W.toFixed(3),c.S.toFixed(3),Lp(c,s).toFixed(3)]);
+  const layout=s=>{
+    const R=[],pt=[],W50=lineW(Z0,p).W;let x=0;
+    secs.forEach((c,k)=>{const L=Lp(c,s);
+      R.push(RC(x,-c.W/2,x+L,c.W/2,'cu'));R.push(RC(x,c.S+c.W/2,x+L,c.S+1.5*c.W,'cu'));
+      if(k===0){const yc=c.S+c.W;R.push(RC(x-W50*2,yc-W50/2,x,yc+W50/2,'feed'));pt.push({x:x-W50*2,y:yc})}
+      if(k===N){const yc=((N+1)%2===1)?0:c.S+c.W;R.push(RC(x+L,yc-W50/2,x+L+W50*2,yc+W50/2,'feed'));pt.push({x:x+L+W50*2,y:yc})}
+      x+=L});
+    return{R,pt};
+  };
+  return{kind:'side',g,warn,build,tuneKind:'len',rows,cols:['Section','Z0e (Ω)','Z0o (Ω)','W (mm)','S (mm)','L (mm)'],layout,
+    summary:s=>[['Line widths',Math.min(...secs.map(c=>c.W)).toFixed(2)+' to '+Math.max(...secs.map(c=>c.W)).toFixed(2)+' mm'],['Smallest gap',Math.min(...secs.map(c=>c.S)).toFixed(3)+' mm'],['Resonator length (≈ λg/2)',(Lp(secs[0],s)+Lp(secs[1],s)).toFixed(2)+' mm']],
+    qucs:s=>{const q=QB(Z0);let prev=null;
+      secs.forEach((c,k)=>{const m=q.add('MCOUPLED','MS'+(k+1),300+k*170,220+k*60,0,[['Subst1',0],[c.W+' mm',1],[Lp(c,s).toFixed(3)+' mm',1],[c.S+' mm',1],['Kirschning',0],['Kirschning',0],['26.85',0]]);
+        const a=m.pin(1),b=m.pin(3);
+        q.add('MOPEN','MO'+(k+1)+'a',a[0]+30,a[1]-20,0,MOPENp(c.W));q.wire(a,[a[0],a[1]-20]);
+        q.add('MOPEN','MO'+(k+1)+'b',b[0]+30,b[1]+20,0,MOPENp(c.W));q.wire(b,[b[0],b[1]+20]);
+        if(k===0)q.port(1,m.pin(0),'L');else q.wire(prev.pin(2),m.pin(0));
+        prev=m});
+      q.port(2,prev.pin(2),'R');return q.done();},
+    qucsNets:s=>{
+      const nl=[];let prev='n1',id=1;
+      secs.forEach((c,k)=>{const ao='o'+(k+1)+'a',bo='o'+(k+1)+'b',bj='n'+(++id);
+        nl.push({t:'MCOUPLED',name:'MS'+(k+1),pins:[prev,ao,bj,bo],props:[['Subst1',0],[c.W+' mm',1],[Lp(c,s).toFixed(3)+' mm',1],[c.S+' mm',1],['Kirschning',0],['Kirschning',0],['26.85',0]]});
+        nl.push({t:'MOPEN',name:'MO'+(k+1)+'a',pins:[ao],props:MOPENp(c.W)});
+        nl.push({t:'MOPEN',name:'MO'+(k+1)+'b',pins:[bo],props:MOPENp(c.W)});
+        prev=bj});
+      return{nl,p1:'n1',p2:prev};
+    }};
+}
+
+/* ======== 2. Hairpin ======== */
+function designHair(p){
+  const g=protoG(p.resp,p.N,p.rip),warn=[],N=p.N,w=p.FBW,Z0=p.Z0,Yr=1/p.Zr;
+  const L=lineW(p.Zr,p),ees=L.ee,thb=p.baseDeg*PI/180,cs=lenOf(thb,p.f0,ees);
+  if(cs-L.W<2*L.W)warn.push(`The arm spacing (${(cs-L.W).toFixed(2)} mm) is less than 2W: coupling between the two arms of one hairpin is not modelled and may be significant. Increase the base angle.`);
+  const tha=(PI-thb)/2,larm=lenOf(tha,p.f0,ees);
+  const kfun=Sh=>{
+    const a=anaPair(L.Wh,Sh,p.er),Ye=1/a.Ze,Yo=1/a.Zo,the=tha*Math.sqrt(a.ee/ees),tho=tha*Math.sqrt(a.eo/ees),tr=tha+thb;
+    const re=resRoot(r=>Ye*Math.tan(the*r)+Yr*Math.tan(tr*r),0.55,1.6),ro=resRoot(r=>Yo*Math.tan(tho*r)+Yr*Math.tan(tr*r),0.55,1.6);
+    return{k:Math.abs(ro*ro-re*re)/(ro*ro+re*re),a};
+  };
+  const hkey=[p.er,p.h,p.Zr,p.baseDeg,p.f0].join(),cache=hairCache[hkey]||(hairCache[hkey]={}),cp=[];
+  for(let i=1;i<N;i++){
+    const kt=w/Math.sqrt(g[i]*g[i+1]),key=kt.toFixed(5);
+    if(!cache[key]){
+      const fn=x=>Math.log(Math.max(kfun(Math.exp(x)).k,1e-6));
+      const sol=solveMono(fn,Math.log(kt),Math.log(0.04),Math.log(12),2e-3,18);
+      const S=Math.exp(sol.x),res=kfun(S);
+      cache[key]={S,Sm:S*p.h,a:res.a,k:res.k,kt,ok:sol.ok};
+    }
+    const c=cache[key];
+    if(!c.ok)warn.push(`Coupling ${i}-${i+1}: k = ${kt.toFixed(4)} is outside the achievable range (best ${c.k.toFixed(4)}). Increase the base angle or narrow the band.`);
+    if(c.Sm<0.1)warn.push(`Coupling ${i}-${i+1}: gap ${c.Sm.toFixed(3)} mm is below typical fabrication limits.`);
+    cp.push(c);
+  }
+  // tap: angle from the resonator centre (voltage node) towards an open end
+  const tap=Qe=>{
+    const s2=PI*Z0/(2*p.Zr*Qe)*(p.tapK||1);let t;
+    if(s2>=1){t=PI/2;warn.push('External Q is too low for the tap to reach: raise the resonator impedance or reduce the bandwidth.')}
+    else t=Math.asin(Math.sqrt(s2));
+    return Math.min(Math.max(t,0.02),PI/2-0.03);
+  };
+  const tIn=tap(g[0]*g[1]/w),tOut=tap(g[N]*g[N+1]/w);
+  const onBase=t=>t<thb/2;
+  const build=s=>{
+    let id=0;const nd=()=>++id,els=[],R=[];
+    for(let i=0;i<N;i++)R.push({OL:nd(),JL:nd(),JR:nd(),OR:nd()});
+    const T1=nd(),T2=nd(),tl=(a,b,th)=>els.push({t:'tl',a,b,Y:Yr,th:Math.max(th,0.01)*s});
+    // input tap on resonator 1 (left half), output tap on resonator N (right half)
+    const r1=R[0],rN=R[N-1];
+    if(onBase(tIn)){tl(r1.OL,r1.JL,tha);tl(r1.JL,T1,thb/2-tIn);tl(T1,r1.JR,thb/2+tIn)}
+    else{const d=PI/2-tIn;tl(r1.OL,T1,d);tl(T1,r1.JL,tha-d);tl(r1.JL,r1.JR,thb)}
+    if(onBase(tOut)){tl(rN.JL,T2,thb/2+tOut);tl(T2,rN.JR,thb/2-tOut);tl(rN.JR,rN.OR,tha)}
+    else{const d=PI/2-tOut;tl(rN.JR,T2,tha-d);tl(T2,rN.OR,d);tl(rN.JL,rN.JR,thb)}
+    for(let i=1;i<N-1;i++)tl(R[i].JL,R[i].JR,thb);
+    cp.forEach((c,i)=>els.push({t:'cpl',n:[R[i].OR,R[i].JR,R[i+1].OL,R[i+1].JL],Ye:1/c.a.Ze,Yo:1/c.a.Zo,the:tha*Math.sqrt(c.a.ee/ees)*s,tho:tha*Math.sqrt(c.a.eo/ees)*s}));
+    return{n:id,els,p1:T1,p2:T2,f0:p.f0,Q:p.Q,Z0};
+  };
+  const dl=openExt(L.Wh,ees)*p.h,W50=lineW(Z0,p).W;
+  const armL=s=>Math.max(larm*s-dl,0.1);
+  const rows=s=>cp.map((c,i)=>[`Gap ${i+1}-${i+2}`,c.kt.toFixed(4),c.k.toFixed(4),L.W.toFixed(3),c.Sm.toFixed(3),armL(s).toFixed(3)]);
+  const layout=s=>{
+    const R=[],pt=[],la=armL(s),fl=W50*2;let xl=0;
+    for(let i=0;i<N;i++){
+      const xr=xl+cs;
+      R.push(RC(xl-L.W/2,-L.W,xl+L.W/2,la,'cu'));R.push(RC(xr-L.W/2,-L.W,xr+L.W/2,la,'cu'));R.push(RC(xl-L.W/2,-L.W,xr+L.W/2,0,'cu'));
+      if(i===0){
+        if(onBase(tIn)){const xt=xl+(thb/2-tIn)/thb*cs;R.push(RC(xt-W50/2,-L.W-fl,xt+W50/2,-L.W,'feed'));pt.push({x:xt,y:-L.W-fl})}
+        else{const yt=la-lenOf((PI/2-tIn)*s,p.f0,ees);R.push(RC(xl-L.W/2-fl,yt-W50/2,xl-L.W/2,yt+W50/2,'feed'));pt.push({x:xl-L.W/2-fl,y:yt})}}
+      if(i===N-1){
+        if(onBase(tOut)){const xt=xl+(thb/2+tOut)/thb*cs;R.push(RC(xt-W50/2,-L.W-fl,xt+W50/2,-L.W,'feed'));pt.push({x:xt,y:-L.W-fl})}
+        else{const yt=la-lenOf((PI/2-tOut)*s,p.f0,ees);R.push(RC(xr+L.W/2,yt-W50/2,xr+L.W/2+fl,yt+W50/2,'feed'));pt.push({x:xr+L.W/2+fl,y:yt})}}
+      if(i<N-1)xl=xr+L.W+cp[i].Sm;
+    }
+    return{R,pt};
+  };
+  const tapTxt=(t,s)=>onBase(t)?'on the base, '+lenOf((thb/2-t)*s,p.f0,ees).toFixed(2)+' mm from the arm':'on the arm, '+lenOf((PI/2-t)*s,p.f0,ees).toFixed(2)+' mm from the open end';
+  return{kind:'hair',g,warn,build,tuneKind:'len',hasTap:true,rows,cols:['Coupling','k target','k realized','W (mm)','S (mm)','Arm L (mm)'],layout,
+    summary:s=>[['Line width',L.W.toFixed(3)+' mm (Zr = '+p.Zr+' Ω)'],['Arm length',armL(s).toFixed(2)+' mm'],['Arm spacing (centres)',cs.toFixed(2)+' mm'],['Input tap',tapTxt(tIn,s)],['Output tap',tapTxt(tOut,s)]],
+    qucs:s=>{const q=QB(Z0),e=th=>lenOf(Math.max(th,0.01)*s,p.f0,ees),la=armL(s),ll=e(tha),yb=440,xl=i=>300+i*220,xr=i=>xl(i)+160;
+      const ml=(nm,cx,cy,len,rot)=>q.add('MLIN',nm,cx,cy,rot,MLINp(L.W,Math.max(len,0.02)));
+      const mo=pt=>{q.wire(pt,[pt[0],pt[1]-20]);return q.add('MOPEN','MO'+(++mo.n),pt[0],pt[1]-50,1,MOPENp(L.W))};mo.n=0;
+      const pairs=cp.map((c,i)=>{const m=q.add('MCOUPLED','MC'+(i+1),xl(i)+190,yb-30,3,[['Subst1',0],[L.W+' mm',1],[la.toFixed(3)+' mm',1],[c.Sm.toFixed(3)+' mm',1],['Kirschning',0],['Kirschning',0],['26.85',0]]);
+        mo(m.pin(0));mo(m.pin(3));return m});
+      // vertical single arm stack: returns bottom point; tap node optionally between two segments
+      const arm=(x,two,lenTop,lenBot,nmA,nmB)=>{
+        if(two){const mb=ml(nmB,x,yb-30,lenBot,3),ma=ml(nmA,x,yb-110,lenTop,3),tp=[x,yb-70];
+          q.wire(ma.pin(1),tp);q.wire(tp,mb.pin(0));mo(ma.pin(0));return{bot:mb.pin(1),tap:tp}}
+        const ma=ml(nmA,x,yb-30,lenTop,3);mo(ma.pin(0));return{bot:ma.pin(1)}};
+      const dIl=e(PI/2-tIn)-dl,dOl=e(PI/2-tOut)-dl,baseTapIn=onBase(tIn),baseTapOut=onBase(tOut);
+      let A=null,B=null;
+      if(baseTapIn)A=arm(xl(0),false,ll-dl,0,'MA');else A=arm(xl(0),true,e(PI/2-tIn)-dl,ll-e(PI/2-tIn),'MA1','MA2');
+      if(baseTapOut)B=arm(xr(N-1),false,ll-dl,0,'MD');else B=arm(xr(N-1),true,e(PI/2-tOut)-dl,ll-e(PI/2-tOut),'MD2','MD1');
+      for(let i=0;i<N;i++){
+        const lb=i===0?A.bot:pairs[i-1].pin(1),rb=i===N-1?B.bot:pairs[i].pin(2);
+        const tapHere=(i===0&&baseTapIn)?'in':(i===N-1&&baseTapOut)?'out':null;
+        if(!tapHere){const b=ml(i===0?'MB1':i===N-1?'MB2':'MBS'+i,(lb[0]+rb[0])/2,yb,e(thb),0);q.wire(lb,b.pin(0));q.wire(b.pin(1),rb)}
+        else{const t=tapHere==='in'?tIn:tOut,l1=e(thb/2-(tapHere==='in'?t:-t)),l2=e(thb/2+(tapHere==='in'?t:-t));
+          const b1=ml(tapHere==='in'?'MB1a':'MB2a',lb[0]+45,yb,l1,0),b2=ml(tapHere==='in'?'MB1b':'MB2b',lb[0]+115,yb,l2,0);
+          const tp=[lb[0]+80,yb];q.wire(lb,b1.pin(0));q.wire(b1.pin(1),tp);q.wire(tp,b2.pin(0));q.wire(b2.pin(1),rb);
+          const px=tapHere==='in'?xl(0)-60:xr(N-1)+60;q.wire(tp,[tp[0],yb+70],[px,yb+70]);q.port(tapHere==='in'?1:2,[px,yb+70],tapHere==='in'?'L':'R')}
+      }
+      if(!baseTapIn){const x=xl(0)-60;q.wire(A.tap,[x,A.tap[1]]);q.port(1,[x,A.tap[1]],'L')}
+      if(!baseTapOut){const x=xr(N-1)+60;q.wire(B.tap,[x,B.tap[1]]);q.port(2,[x,B.tap[1]],'R')}
+      return q.done();},
+    qucsNets:s=>{
+      const nl=[];
+      const ml=(nm,a,b,len)=>nl.push({t:'MLIN',name:nm,pins:[a,b],props:MLINp(L.W,Math.max(len,0.02))});
+      const mo=(nm,a)=>nl.push({t:'MOPEN',name:nm,pins:[a],props:MOPENp(L.W)});
+      const e=th=>lenOf(Math.max(th,0.01)*s,p.f0,ees),la=armL(s),ll=e(tha),R=[];
+      for(let i=0;i<N;i++)R.push({OL:'a'+i,JL:'b'+i,JR:'c'+i,OR:'d'+i});
+      const r1=R[0],rN=R[N-1];
+      if(onBase(tIn)){ml('MA',r1.OL,r1.JL,ll-dl);mo('MOA',r1.OL);ml('MB1a',r1.JL,'n1',e(thb/2-tIn));ml('MB1b','n1',r1.JR,e(thb/2+tIn))}
+      else{const d=PI/2-tIn;ml('MA1',r1.OL,'n1',e(d)-dl);mo('MOA',r1.OL);ml('MA2','n1',r1.JL,e(tha-d));ml('MB1',r1.JL,r1.JR,e(thb))}
+      if(onBase(tOut)){ml('MB2a',rN.JL,'n2',e(thb/2+tOut));ml('MB2b','n2',rN.JR,e(thb/2-tOut));ml('MD',rN.JR,rN.OR,ll-dl);mo('MOD',rN.OR)}
+      else{const d=PI/2-tOut;ml('MD1',rN.JR,'n2',e(tha-d));ml('MD2','n2',rN.OR,e(d)-dl);mo('MOD',rN.OR);ml('MB2',rN.JL,rN.JR,e(thb))}
+      for(let i=1;i<N-1;i++)ml('MBS'+i,R[i].JL,R[i].JR,e(thb));
+      cp.forEach((c,i)=>{
+        nl.push({t:'MCOUPLED',name:'MC'+(i+1),pins:[R[i+1].OL,R[i+1].JL,R[i].JR,R[i].OR],props:[['Subst1',0],[L.W+' mm',1],[la.toFixed(3)+' mm',1],[c.Sm.toFixed(3)+' mm',1],['Kirschning',0],['Kirschning',0],['26.85',0]]});
+        mo('MOC'+(i+1)+'a',R[i].OR);mo('MOC'+(i+1)+'b',R[i+1].OL);
+      });
+      return{nl,p1:'n1',p2:'n2'};
+    }};
+}
+
+/* ======== 3. End-coupled with gap capacitors ======== */
+function designGap(p){
+  const g=protoG(p.resp,p.N,p.rip),warn=[],N=p.N,w=p.FBW,Z0=p.Z0,Y0=1/Z0,Yr=1/p.Zr,w0=2*PI*p.f0;
+  const L=lineW(p.Zr,p),ees=L.ee;
+  const Jn=[];Jn[0]=Math.sqrt(Y0*(PI/2)*Yr*w/(g[0]*g[1]));
+  for(let i=1;i<N;i++)Jn[i]=(PI/2)*Yr*w/Math.sqrt(g[i]*g[i+1]);
+  Jn[N]=Math.sqrt(Y0*(PI/2)*Yr*w/(g[N]*g[N+1]));
+  const gaps=[],ang=[];
+  for(let k=0;k<=N;k++){
+    const end=(k===0||k===N);let B,a;
+    if(end){let J=Jn[k];if(J>=0.98*Y0){warn.push('Port coupling J is too strong for a series capacitor: raise Zr or narrow the band.');J=0.98*Y0}
+      B=J/Math.sqrt(1-(J/Y0)**2);const Bs=B*Y0*Y0/(Y0*Y0+B*B);a=Math.atan(Bs/Yr)}
+    else{let Jp=Jn[k]/Yr;if(Jp>=0.95){warn.push(`Coupling ${k}-${k+1} is too strong for a series capacitor.`);Jp=0.95}B=Yr*Jp/(1-Jp*Jp);a=Math.atan(Jp)}
+    const Creq=B/w0;
+    const fn=x=>Math.log(Math.max(gapCaps(L.W,Math.exp(x),p.h,p.er).Cg,1e-18));
+    const sol=solveMono(fn,Math.log(Creq),Math.log(0.04*L.W),Math.log(4*L.W),1e-3,40),S=Math.exp(sol.x),gc=gapCaps(L.W,S,p.h,p.er);
+    if(!sol.ok)warn.push(`Gap ${k+1}: ${(Creq*1e15).toFixed(1)} fF cannot be reached with the Garg–Bahl model (limit ${(gc.Cg*1e15).toFixed(1)} fF).`);
+    else if(S/L.W<0.1||S/L.W>1)warn.push(`Gap ${k+1}: S/W = ${(S/L.W).toFixed(2)} is outside the Garg–Bahl validity range (0.1–1).`);
+    if(S<0.1)warn.push(`Gap ${k+1}: ${S.toFixed(3)} mm is below typical fabrication limits.`);
+    gaps.push({Creq,S,Cg:gc.Cg,Cp:gc.Cp});ang.push(a);
+  }
+  if(L.Wh<0.5||L.Wh>2)warn.push('Garg–Bahl gap formulas are valid for 0.5 ≤ W/h ≤ 2; the gap values are extrapolated.');
+  const th=[];for(let i=1;i<=N;i++)th[i]=PI-ang[i-1]-ang[i]-Math.atan(w0*gaps[i-1].Cp/Yr)-Math.atan(w0*gaps[i].Cp/Yr);
+  if(th.slice(1).some(t=>t<=0.3))warn.push('Resonator electrical length is too short after absorbing the coupling.');
+  const build=s=>{
+    let id=1;const els=[];let prev=1;
+    for(let k=0;k<=N;k++){
+      const nxt=++id,gp=gaps[k];
+      els.push({t:'cap',a:prev,b:nxt,C:gp.Cg},{t:'cap',a:prev,C:gp.Cp},{t:'cap',a:nxt,C:gp.Cp});
+      if(k<N){const nr=++id;els.push({t:'tl',a:nxt,b:nr,Y:Yr,th:th[k+1]*s});prev=nr}else prev=nxt;
+    }
+    return{n:id,els,p1:1,p2:prev,f0:p.f0,Q:p.Q,Z0};
+  };
+  const Lr=(i,s)=>Math.max(lenOf(th[i]*s,p.f0,ees),0.1);
+  const rows=s=>gaps.map((c,k)=>[`Gap ${k+1}`,(c.Creq*1e15).toFixed(1),(c.Cp*1e15).toFixed(1),L.W.toFixed(3),c.S.toFixed(3),k<N?Lr(k+1,s).toFixed(3):'—']);
+  const layout=s=>{
+    const R=[],pt=[],W50=lineW(Z0,p).W;let x=0;
+    R.push(RC(-W50*2,-W50/2,0,W50/2,'feed'));pt.push({x:-W50*2,y:0});
+    for(let k=0;k<=N;k++){
+      x+=gaps[k].S;
+      if(k<N){const l=Lr(k+1,s);R.push(RC(x,-L.W/2,x+l,L.W/2,'cu'));x+=l}
+      else{R.push(RC(x,-W50/2,x+W50*2,W50/2,'feed'));pt.push({x:x+W50*2,y:0})}
+    }
+    return{R,pt};
+  };
+  return{kind:'gap',g,warn,build,tuneKind:'len',rows,cols:['Gap','Cs req. (fF)','Cp (fF)','W (mm)','S (mm)','Resonator L (mm)'],layout,
+    summary:s=>[['Line width',L.W.toFixed(3)+' mm (Zr = '+p.Zr+' Ω)'],['Resonator length',Lr(1,s).toFixed(2)+' mm'],['Largest gap',Math.max(...gaps.map(c=>c.S)).toFixed(3)+' mm'],['Smallest gap',Math.min(...gaps.map(c=>c.S)).toFixed(3)+' mm']],
+    qucs:s=>{const q=QB(Z0);let prev=null,i=0;
+      const put=(t,nm,props)=>{const c=q.add(t,nm,300+i*110,260,0,props);if(prev)q.wire(prev.pin(1),c.pin(0));else q.port(1,c.pin(0),'L');prev=c;i++};
+      for(let k=0;k<=N;k++){put('MGAP','MG'+(k+1),[['Subst1',0],[L.W+' mm',1],[L.W+' mm',1],[gaps[k].S.toFixed(3)+' mm',1],['Hammerstad',0],['Kirschning',0]]);
+        if(k<N)put('MLIN','ML'+(k+1),MLINp(L.W,Lr(k+1,s)))}
+      q.port(2,prev.pin(1),'R');return q.done();},
+    qucsNets:s=>{
+      const nl=[];let id=1,prev='n1';
+      for(let k=0;k<=N;k++){
+        const nxt='n'+(++id);
+        nl.push({t:'MGAP',name:'MG'+(k+1),pins:[prev,nxt],props:[['Subst1',0],[L.W+' mm',1],[L.W+' mm',1],[gaps[k].S.toFixed(3)+' mm',1],['Hammerstad',0],['Kirschning',0]]});
+        if(k<N){const nr='n'+(++id);nl.push({t:'MLIN',name:'ML'+(k+1),pins:[nxt,nr],props:MLINp(L.W,Lr(k+1,s))});prev=nr}else prev=nxt;
+      }
+      return{nl,p1:'n1',p2:prev};
+    }};
+}
+
+
+/* ======== 5/6. Combline and interdigital (multiconductor line arrays) ======== */
+function pairRes(Y,cL,th0){let lo=1e-6,hi=PI/th0-1e-6;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(cL*m-Y/Math.tan(th0*m)<0)lo=m;else hi=m}return(lo+hi)/2}
+function combPair(Ye,Yo,th0){
+  let lo=Math.log(Ye*1e-4),hi=Math.log(Ye*1e4);
+  for(let i=0;i<50;i++){const m=(lo+hi)/2,c=Math.exp(m),re=pairRes(Ye,c,th0),ro=pairRes(Yo,c,th0);if(re*ro>1)lo=m;else hi=m}
+  const c=Math.exp((lo+hi)/2),re=pairRes(Ye,c,th0),ro=pairRes(Yo,c,th0);
+  return{cL:c,k:(ro*ro-re*re)/(ro*ro+re*re)};
+}
+function designMTL(p,kind){
+  const g=protoG(p.resp,p.N,p.rip),warn=[],N=p.N,w=p.FBW,Z0=p.Z0,w0=2*PI*p.f0,comb=kind==='comb';
+  if(N<2)warn.push('Order must be at least 2.');
+  const L=lineW(p.Zr,p),ees=L.ee,Wh=L.Wh,yu=1/(ETA0*Math.sqrt(ees)),th0=comb?p.thDeg*PI/180:PI/2;
+  const C0s=capSingle(Wh,p.er),key0=[kind,p.er,p.h,p.Zr,p.f0,th0].join(),cache=mtlCache[key0]||(mtlCache[key0]={}),pr=[];
+  for(let i=1;i<N;i++){
+    const kt=w/Math.sqrt(g[i]*g[i+1]),key=kt.toFixed(5);
+    if(!cache[key]){
+      let sol,ok;
+      if(comb){
+        const fn=x=>{const c=capPair(Wh,Math.exp(x),p.er),r=combPair(yu*c.Ce,yu*c.Co,th0);return Math.log(Math.max(r.k,1e-7))};
+        sol=solveMono(fn,Math.log(kt),Math.log(0.03),Math.log(25),1e-3,30);
+      }else{
+        const dl=(1-Math.sqrt(1-kt*kt))/kt,R=Math.pow(Math.tan(PI/4*(1+dl)),2);
+        const fn=x=>{const c=capPair(Wh,Math.exp(x),p.er);return Math.log(c.Co/c.Ce)};
+        sol=solveMono(fn,Math.log(R),Math.log(0.03),Math.log(25),1e-3,30);
+      }
+      const S=Math.exp(sol.x),c=capPair(Wh,S,p.er);
+      cache[key]={S,Sm:S*p.h,Ce:c.Ce,Co:c.Co,kt,ok:sol.ok,cL:comb?combPair(yu*c.Ce,yu*c.Co,th0).cL:0};
+    }
+    const c=cache[key];
+    if(!c.ok)warn.push(`Coupling ${i}-${i+1}: k = ${kt.toFixed(4)} is outside the achievable range for this line width.`);
+    if(c.Sm<0.1)warn.push(`Coupling ${i}-${i+1}: gap ${c.Sm.toFixed(3)} mm is below typical fabrication limits.`);
+    pr.push(c);
+  }
+  // capacitance matrix (relative to eps0)
+  const M=Array.from({length:N},()=>Array(N).fill(0)),Cg=Array(N).fill(C0s);
+  pr.forEach((c,i)=>{const dl=C0s-c.Ce,cm=(c.Co-c.Ce)/2;Cg[i]-=dl;Cg[i+1]-=dl;M[i][i+1]=M[i+1][i]=-cm});
+  for(let j=0;j<N;j++){let d=Cg[j];if(j>0)d+=-M[j][j-1];if(j<N-1)d+=-M[j][j+1];M[j][j]=d;if(Cg[j]<=0.05*C0s)warn.push(`Resonator ${j+1}: ground capacitance is nearly zero; the lines are too closely packed.`)}
+  const Ym=M.map(r=>r.map(v=>v*yu));
+  const CL=[];if(comb)for(let j=0;j<N;j++){const a=[];if(j>0)a.push(pr[j-1].cL);if(j<N-1)a.push(pr[j].cL);CL.push(a.reduce((x,y)=>x+y,0)/a.length/w0)}
+  const sinc=th0+Math.sin(th0)*Math.cos(th0),k=p.tapK||1;
+  const tapA=(Yeff,Qe)=>{let s2=Yeff*Z0*sinc/(2*Qe)*k,t;
+    if(s2>=Math.sin(th0)**2){t=th0;warn.push('External Q is too low for the tap to reach the open end: raise the line impedance or narrow the band.')}else t=Math.asin(Math.sqrt(s2));
+    return Math.min(Math.max(t,0.02),th0-0.01)};
+  const tIn=tapA(Ym[0][0],g[0]*g[1]/w),tOut=tapA(Ym[N-1][N-1],g[N]*g[N+1]/w);
+  const short0=j=>comb?true:(j%2===0),pos=(j,t)=>short0(j)?t:th0-t;
+  const posIn=pos(0,tIn),posOut=pos(N-1,tOut);
+  const build=s=>{
+    let bp=[0,posIn,posOut,th0].sort((a,b)=>a-b);const b2=[bp[0]];for(let i=1;i<bp.length;i++)if(bp[i]-b2[b2.length-1]>1e-4)b2.push(bp[i]);
+    const B=b2.length-1;let id=0;const ids=[];
+    for(let b=0;b<=B;b++){ids.push([]);for(let j=0;j<N;j++){const gnd=(b===0&&short0(j))||(b===B&&!short0(j));ids[b].push(gnd?0:++id)}}
+    const els=[];
+    for(let b=0;b<B;b++)els.push({t:'mtl',A:ids[b],B:ids[b+1],Ym,th:(b2[b+1]-b2[b])*(comb?1:s)});
+    if(comb)for(let j=0;j<N;j++)els.push({t:'cap',a:ids[B][j],C:CL[j]*s});
+    const bi=v=>b2.findIndex(x=>Math.abs(x-v)<2e-4);
+    return{n:id,els,p1:ids[bi(posIn)][0],p2:ids[bi(posOut)][N-1],f0:p.f0,Q:p.Q,Z0};
+  };
+  const lineLen=s=>comb?lenOf(th0,p.f0,ees):Math.max(lenOf(th0*s,p.f0,ees)-openExt(Wh,ees)*p.h,0.1);
+  const rows=s=>pr.map((c,i)=>[`Gap ${i+1}-${i+2}`,c.kt.toFixed(4),c.Sm.toFixed(3),L.W.toFixed(3)]);
+  const W50=lineW(Z0,p).W;
+  const layout=s=>{
+    const R=[],pt=[],l=lineLen(s),gapE=Math.max(1,2*L.W),H=comb?l:l+gapE,fl=W50*2,xs=[];let x=0;
+    for(let j=0;j<N;j++){xs.push(x);x+=L.W+(j<N-1?pr[j].Sm:0)}
+    const x1=xs[N-1]+L.W/2;
+    if(comb){R.push(RC(-L.W,-L.W*1.5,x1+L.W/2+L.W/2,0,'gnd'));
+      xs.forEach(xc=>{R.push(RC(xc-L.W/2,0,xc+L.W/2,l,'cu'));R.push(RC(xc-L.W*0.7,l+L.W*0.15,xc+L.W*0.7,l+L.W*0.15+L.W*0.5,'cap'))})}
+    else{R.push(RC(-L.W,-L.W*1.5,x1+L.W,0,'gnd'));R.push(RC(-L.W,H,x1+L.W,H+L.W*1.5,'gnd'));
+      xs.forEach((xc,j)=>{if(j%2===0)R.push(RC(xc-L.W/2,0,xc+L.W/2,l,'cu'));else R.push(RC(xc-L.W/2,H-l,xc+L.W/2,H,'cu'))})}
+    const yIn=lenOf(posIn*(comb?1:s),p.f0,ees),yOut=short0(N-1)?lenOf(posOut*(comb?1:s),p.f0,ees):H-lenOf((th0-posOut)*(comb?1:s),p.f0,ees)*1;
+    const yO=short0(N-1)?lenOf(tOut*(comb?1:s),p.f0,ees):H-lenOf(tOut*(comb?1:s),p.f0,ees);
+    R.push(RC(-L.W/2-fl,yIn-W50/2,-L.W/2,yIn+W50/2,'feed'));pt.push({x:-L.W/2-fl,y:yIn});
+    R.push(RC(xs[N-1]+L.W/2,yO-W50/2,xs[N-1]+L.W/2+fl,yO+W50/2,'feed'));pt.push({x:xs[N-1]+L.W/2+fl,y:yO});
+    return{R,pt};
+  };
+  const lens=s=>lenOf(tIn*(comb?1:s),p.f0,ees).toFixed(2)+' / '+lenOf(tOut*(comb?1:s),p.f0,ees).toFixed(2)+' mm';
+  return{kind,g,warn,build,tuneKind:comb?'cap':'len',hasTap:true,rows,cols:['Coupling','k target','S (mm)','W (mm)'],layout,
+    summary:s=>[['Line width',L.W.toFixed(3)+' mm (Zr = '+p.Zr+' Ω)'],['Line length',lineLen(s).toFixed(2)+' mm ('+(th0*180/PI).toFixed(0)+'° at f0'+(comb?', shorted at one end':', alternately shorted')+')'],['Tap heights from short (in / out)',lens(s)]]
+      .concat(comb?[['Loading capacitors C_L',CL.map(c=>(c*s*1e12).toFixed(3)).join(', ')+' pF']]:[]),
+    qucs:null};
+}
+
+/* ===== tuning & evaluation ===== */
+function tuneDesign(d,p){
+  const fc=x=>bandCentre(makeSim(d.build(Math.exp(x))),p);
+  const slope0=d.tuneKind==='cap'?-0.55:-1;
+  let x0=0,g0=Math.log(fc(x0)/p.f0),hist=[{x:0,g:g0}];
+  if(Math.abs(g0)<3e-4)return{s:1,g:g0};
+  let sl=slope0,x1=Math.max(-0.5,Math.min(0.5,x0-g0/sl)),g1=0;
+  for(let it=0;it<7;it++){
+    g1=Math.log(fc(x1)/p.f0);
+    if(Math.abs(g1)<2e-4)return{s:Math.exp(x1),g:g1};
+    const nsl=(g1-g0)/(x1-x0);
+    if(isFinite(nsl)&&nsl<-0.1&&nsl>-3)sl=nsl;
+    x0=x1;g0=g1;x1=Math.max(-0.6,Math.min(0.6,x1-g1/sl));
+  }
+  return{s:Math.exp(x0),g:g0};
+}
+function evalDesign(d,p,s,np=601){
+  const sim=makeSim(d.build(s)),span=Math.max(p.span,2),fa=p.f0*(1-span*p.FBW/2),fb=p.f0*(1+span*p.FBW/2),fr=[],s21=[],s11=[],i21=[],i11=[];
+  for(let k=0;k<np;k++){const f=Math.max(fa,p.f0*0.05)+(fb-Math.max(fa,p.f0*0.05))*k/(np-1),r=sim(f),id=idealDB(p,f);fr.push(f);s21.push(dBc(r[1]));s11.push(dBc(r[0]));i21.push(id.s21);i11.push(id.s11)}
+  return{fr,s21,s11,i21,i11};
+}
+function refineTap(designFn,p,s){
+  const obj=x=>{const d=designFn(Object.assign({},p,{tapK:Math.exp(x)})),sim=makeSim(d.build(s));let w=-99;
+    for(let i=0;i<=28;i++){const f=p.f0*(1+(i/28-0.5)*0.9*p.FBW);w=Math.max(w,dBc(sim(f)[0]))}return w};
+  let a=Math.log(0.4),b=Math.log(2.6);const r=0.6180339887;let c=b-r*(b-a),d=a+r*(b-a),fc=obj(c),fd=obj(d);
+  for(let i=0;i<13;i++){if(fc<fd){b=d;d=c;fd=fc;c=b-r*(b-a);fc=obj(c)}else{a=c;c=d;fc=fd;d=a+r*(b-a);fd=obj(d)}}
+  const x=(a+b)/2;return Math.exp(x);
+}
+function runDesign(designFn,p,doTune,doRefine){
+  let q=Object.assign({},p),d=designFn(q),t={s:1,g:0};
+  if(doTune)t=tuneDesign(d,q);
+  if(doRefine&&d.hasTap){q.tapK=refineTap(designFn,q,t.s);d=designFn(q);if(doTune)t=tuneDesign(d,q)}
+  return{d,s:t.s,p:q};
+}
+
+/* ===== Qucs-S physical export (net-label based, so no wire routing is needed) ===== */
+function qv(v,u){
+  const P=[[1e-15,'f'],[1e-12,'p'],[1e-9,'n'],[1e-6,'u'],[1e-3,'m'],[1,''],[1e3,'k'],[1e6,'M'],[1e9,'G']];
+  let c=P[0];for(const x of P)if(Math.abs(v)>=x[0]*0.99995)c=x;
+  return `${+(v/c[0]).toFixed(2)} ${c[1]}${u}`;
+}
+const PINS={MLIN:[[-30,0],[30,0]],MGAP:[[-30,0],[30,0]],MOPEN:[[-30,0]],MCOUPLED:[[-30,-30],[30,-30],[30,30],[-30,30]],Pac:[[30,0],[-30,0]]};
+const rotP=(o,r)=>{let x=o[0],y=o[1];for(let i=0;i<r;i++){const t=-x;x=y;y=t}return[x,y]};   // same transform as Qucs-S Component::rotate
+function QB(Z0){
+  const C=[],W=[];let maxY=0;
+  const q={
+    add(type,name,cx,cy,rot,props){
+      C.push(`<${type} ${name} 1 ${cx} ${cy} -30 -56 0 ${rot} ${props.map(p=>`"${p[0]}" ${p[1]}`).join(' ')}>`);
+      const pins=PINS[type].map(o=>{const r=rotP(o,rot);return[cx+r[0],cy+r[1]]});
+      maxY=Math.max(maxY,cy+60);return{pin:k=>pins[k]};},
+    wire(...pts){for(let i=0;i+1<pts.length;i++){const a=pts[i],b=pts[i+1];if(a[0]!==b[0]||a[1]!==b[1])W.push(`<${a[0]} ${a[1]} ${b[0]} ${b[1]} "" 0 0 0 "">`);maxY=Math.max(maxY,a[1],b[1])}},
+    gnd(x,y){C.push(`<GND * 1 ${x} ${y} 0 0 0 0>`)},
+    port(n,pt,side){
+      const L=side==='L',cx=pt[0]+(L?-60:60),m=q.add('Pac','P'+n,cx,pt[1],L?0:2,[[String(n),1],[Z0+' Ohm',1],['0 dBm',0],['1 GHz',0],['26.85',0]]);
+      q.wire(m.pin(0),pt);const g=m.pin(1);q.wire(g,[g[0],g[1]+20]);q.gnd(g[0],g[1]+20);},
+    done(){return{comps:C,wires:W,maxY}}
+  };
+  return q;
+}
+function qucsSch(res,p,fa,fb,np){
+  const rd=v=>v.replace(/(\d+\.\d{5,})/g,m=>(+(+m).toFixed(4)).toString());
+  const Cm=res.comps.map(rd),SY=res.maxY+120;
+  Cm.push(`<SUBST Subst1 1 140 ${SY} -30 24 0 0 "${p.er}" 1 "${p.h} mm" 1 "${p.tmm*1000} um" 1 "${p.tand}" 1 "1.68e-8" 1 "0" 1>`);
+  Cm.push(`<.SP SP1 1 380 ${SY} 0 67 0 0 "lin" 1 "${qv(fa,'Hz')}" 1 "${qv(fb,'Hz')}" 1 "${np}" 1 "no" 0 "1" 0 "2" 0 "yes" 0>`);
+  Cm.push(`<Eqn Eqn1 1 640 ${SY} -28 15 0 0 "S21_dB=dB(S[2,1])" 1 "S11_dB=dB(S[1,1])" 1 "yes" 0>`);
+  return `<Qucs Schematic 26.1.1>\n<Components>\n${Cm.join('\n')}\n</Components>\n<Wires>\n${res.wires.join('\n')}\n</Wires>\n<Diagrams>\n</Diagrams>\n<Paintings>\n</Paintings>\n`;
+}
+
+const $=id=>document.getElementById(id),root=document.documentElement;
+const TOPO={
+  side:{name:'Side-coupled (parallel-coupled half-wave)',fn:designSide,note:'N+1 coupled-line sections of λ/4, J-inverter design. Each section has its own width and gap (Z0e/Z0o synthesized with the field solver).'},
+  hair:{name:'Hairpin (folded half-wave, tapped)',fn:designHair,note:'U-shaped half-wave resonators. Gaps are solved from the coupling coefficients; feeds are tapped. Coupling between the two arms of one hairpin is not modelled.'},
+  comb:{name:'Combline (shorted, capacitively loaded)',fn:p=>designMTL(p,'comb'),note:'Equal-width shorted lines shorter than λ/4, loaded with lumped capacitors at the open ends; tapped feeds. Compact, with a wide upper stopband.'},
+  inter:{name:'Interdigital (alternately shorted λ/4)',fn:p=>designMTL(p,'inter'),note:'Equal-width λ/4 lines, alternately shorted at opposite ends; tapped feeds. Good for wider bands.'},
+  gap:{name:'End-coupled (gap capacitors)',fn:designGap,note:'Half-wave resonators in line, coupled by series gap capacitors (Garg–Bahl gap model). Best at narrow bandwidths and high frequency.'}
+};
+let SIM=null,GEO=null,CUR=null,TOPONOW='side';
+const css=n=>getComputedStyle(root).getPropertyValue(n).trim();
+function syncVis(){
+  const t=$('topo').value;
+  document.querySelectorAll('.zr').forEach(r=>r.hidden=(t==='side'));
+  document.querySelectorAll('.th').forEach(r=>r.hidden=(t!=='comb'));
+  document.querySelectorAll('.bd').forEach(r=>r.hidden=(t!=='hair'));
+  document.querySelectorAll('.rp').forEach(r=>r.hidden=($('resp').value!=='cheb'));
+  $('note').textContent=TOPO[t].note;
+}
+function readP(){
+  const g=id=>parseFloat($(id).value),p={er:g('er'),h:g('h'),tmm:g('tm')*1e-3,tand:g('td'),f0:g('f0')*1e6,bw:g('bw')*1e6,N:Math.round(g('N')),resp:$('resp').value,rip:g('rip'),
+    Z0:g('z0'),Zr:g('zr'),Q:g('qu')||0,thDeg:g('thd'),baseDeg:g('bd'),span:g('sp')};
+  p.FBW=p.bw/p.f0;const e=[];
+  if(![p.er,p.h,p.f0,p.bw,p.Z0,p.span].every(x=>x>0))e.push('Please check the numeric values.');
+  if(!(p.N>=2&&p.N<=9))e.push('The order must be between 2 and 9.');
+  if(p.er<1.5)e.push('εr must be at least 1.5.');
+  if(p.resp==='cheb'&&!(p.rip>=0.001&&p.rip<=3))e.push('Ripple must be between 0.001 and 3 dB.');
+  if(p.FBW>0.6)e.push('Fractional bandwidth above 60 % is not supported by these narrowband designs.');
+  if($('topo').value!=='side'&&!(p.Zr>=15&&p.Zr<=150))e.push('Resonator impedance must be between 15 and 150 Ω.');
+  if($('topo').value==='comb'&&!(p.thDeg>=15&&p.thDeg<=80))e.push('Combline electrical length must be between 15° and 80°.');
+  if($('topo').value==='hair'&&!(p.baseDeg>=5&&p.baseDeg<=85))e.push('Hairpin base angle must be between 5° and 85°.');
+  return{p,e};
+}
+function fmtF(f){return f>=1e9?(f/1e9).toFixed(4)+' GHz':(f/1e6).toFixed(2)+' MHz'}
+function niceStep(raw){const e=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/e;return(m<1.5?1:m<3?2:m<7?5:10)*e}
+function drawPlot(hover){
+  if(!SIM)return;
+  const cv=$('plot'),ctx=cv.getContext('2d'),dpr=window.devicePixelRatio||1;
+  const W=Math.max(300,cv.parentElement.clientWidth-16),H=Math.round(Math.max(300,Math.min(440,W*0.5)));
+  cv.style.height=H+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+  const ink=css('--ink'),muted=css('--muted'),grid=css('--grid'),card=css('--card'),C21='#e5262b',C11='#1f5fe0';
+  const {fr,s21,s11,i21,i11,ymin,U,uName}=SIM,fa=fr[0],fb=fr[fr.length-1],ymax=0;
+  const ml=56,mr=16,mt=12,mb=66,pw=W-ml-mr,ph=H-mt-mb;
+  const X=f=>ml+(f-fa)/(fb-fa)*pw,Y=v=>mt+(ymax-Math.min(ymax,Math.max(ymin,v)))/(ymax-ymin)*ph;
+  ctx.fillStyle=card;ctx.fillRect(0,0,W,H);ctx.font='12px system-ui,sans-serif';ctx.textBaseline='middle';
+  ctx.strokeStyle=grid;ctx.lineWidth=1;ctx.fillStyle=muted;ctx.textAlign='right';
+  for(let v=0;v>=ymin-1e-9;v-=10){const y=Math.round(Y(v))+.5;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+pw,y);ctx.stroke();ctx.fillText(String(v),ml-8,y)}
+  const step=niceStep((fb-fa)/U/8),dec=Math.max(0,Math.ceil(-Math.log10(step)+1e-9));
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let v=Math.ceil(fa/U/step)*step;v<=fb/U+1e-12;v+=step){const x=Math.round(X(v*U))+.5;ctx.beginPath();ctx.moveTo(x,mt);ctx.lineTo(x,mt+ph);ctx.stroke();ctx.fillText(v.toFixed(dec),x,mt+ph+7)}
+  ctx.fillStyle=ink;ctx.font='600 13px system-ui,sans-serif';ctx.fillText(`Frequency (${uName})`,ml+pw/2,mt+ph+26);
+  ctx.save();ctx.translate(14,mt+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='middle';ctx.fillText('Magnitude (dB)',0,0);ctx.restore();
+  ctx.fillStyle='rgba(120,140,135,.13)';ctx.fillRect(X(SIM.f0-SIM.bw/2),mt,X(SIM.f0+SIM.bw/2)-X(SIM.f0-SIM.bw/2),ph);
+  ctx.save();ctx.beginPath();ctx.rect(ml,mt,pw,ph);ctx.clip();
+  const tr=(a,col,wd,dash)=>{ctx.strokeStyle=col;ctx.lineWidth=wd;ctx.setLineDash(dash||[]);ctx.beginPath();for(let i=0;i<fr.length;i++){const x=X(fr[i]),y=Y(a[i]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke();ctx.setLineDash([])};
+  if($('ideal').checked){tr(i21,muted,1.2,[5,4]);tr(i11,muted,1.2,[5,4])}
+  tr(s11,C11,2);tr(s21,C21,2);ctx.restore();
+  const items=[['S21',C21,false],['S11',C11,false]];if($('ideal').checked)items.push(['Ideal prototype',muted,true]);
+  ctx.font='13px system-ui,sans-serif';ctx.textBaseline='middle';ctx.textAlign='left';
+  const wid=items.map(it=>ctx.measureText(it[0]).width+38),tot=wid.reduce((a,b)=>a+b,0);let lx=ml+pw/2-tot/2;const ly=H-12;
+  items.forEach((it,i)=>{ctx.strokeStyle=it[1];ctx.lineWidth=2;ctx.setLineDash(it[2]?[5,4]:[]);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+18,ly);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=ink;ctx.fillText(it[0],lx+24,ly);lx+=wid[i]});
+  GEO={ml,pw,n:fr.length};
+  if(hover!=null){
+    const x=X(fr[hover]);ctx.strokeStyle=muted;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(x+.5,mt);ctx.lineTo(x+.5,mt+ph);ctx.stroke();ctx.setLineDash([]);
+    [[s21[hover],C21],[s11[hover],C11]].forEach(([v,c])=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,Y(v),4,0,2*Math.PI);ctx.fill()});
+    const lines=[`${(fr[hover]/U).toFixed(Math.max(2,dec+2))} ${uName}`,`S21: ${s21[hover].toFixed(2)} dB`,`S11: ${s11[hover].toFixed(2)} dB`];
+    ctx.font='12.5px system-ui,sans-serif';const tw=Math.max(...lines.map(l=>ctx.measureText(l).width))+20,th=lines.length*18+12;
+    let tx=x+14;if(tx+tw>ml+pw)tx=x-14-tw;const ty=mt+8;
+    ctx.fillStyle=card;ctx.strokeStyle=muted;ctx.fillRect(tx,ty,tw,th);ctx.strokeRect(tx+.5,ty+.5,tw,th);ctx.textBaseline='middle';ctx.textAlign='left';
+    lines.forEach((l,i)=>{ctx.fillStyle=i===1?C21:(i===2?C11:ink);ctx.fillText(l,tx+10,ty+16+i*18)});
+  }
+}
+function hoverAt(ev){if(!GEO||!SIM)return;const r=$('plot').getBoundingClientRect(),i=Math.round((ev.clientX-r.left-GEO.ml)/GEO.pw*(GEO.n-1));drawPlot(i<0||i>=GEO.n?null:i)}
+$('plot').addEventListener('pointermove',hoverAt);$('plot').addEventListener('pointerdown',hoverAt);$('plot').addEventListener('pointerleave',()=>drawPlot(null));
+new ResizeObserver(()=>drawPlot(null)).observe($('plot').parentElement);
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{drawPlot(null);if(CUR)drawLayout()});
+
+const LCOL={cu:'#b87333',feed:'#d9a441',cap:'#2f6fdb',gnd:'#8a8f98'};
+function drawLayout(){
+  const lay=CUR.d.layout(CUR.s),R=lay.R;let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  R.forEach(r=>{x0=Math.min(x0,r.x0);x1=Math.max(x1,r.x1);y0=Math.min(y0,r.y0);y1=Math.max(y1,r.y1)});
+  const m=Math.max(x1-x0,y1-y0)*0.04,vw=x1-x0+2*m,vh=y1-y0+2*m;
+  let s='';R.forEach(r=>{s+=`<rect x="${(r.x0-x0+m).toFixed(3)}" y="${(y1-r.y1+m).toFixed(3)}" width="${(r.x1-r.x0).toFixed(3)}" height="${(r.y1-r.y0).toFixed(3)}" fill="${LCOL[r.c]}"/>`});
+  const fs=Math.max(vw,vh)*0.028;
+  lay.pt.forEach((q,i)=>{s+=`<circle cx="${(q.x-x0+m).toFixed(3)}" cy="${(y1-q.y+m).toFixed(3)}" r="${(fs*0.35).toFixed(3)}" fill="#c0392b"/><text x="${(q.x-x0+m).toFixed(3)}" y="${(y1-q.y+m-fs*0.8).toFixed(3)}" font-size="${fs.toFixed(3)}" text-anchor="middle" fill="#222" font-family="monospace">P${i+1}</text>`});
+  const h=Math.min(380,Math.max(160,420*vh/vw));
+  $('layout').innerHTML=`<svg viewBox="0 0 ${vw.toFixed(3)} ${vh.toFixed(3)}" style="width:100%;height:${h}px;background:#f4f6f8;border:1px solid var(--line);border-radius:.25rem" preserveAspectRatio="xMidYMid meet">${s}</svg>`;
+  $('lsize').textContent=`Overall footprint about ${(x1-x0).toFixed(1)} × ${(y1-y0).toFixed(1)} mm (metal only, feed lines shown 2 × W50 long).`;
+}
+function table(cols,rows){return '<table class="table table-striped mono"><thead><tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(v=>`<td>${v}</td>`).join('')+'</tr>').join('')+'</tbody></table>'}
+function setQucsLink(){
+  let a=$('qucsLink');
+  if(!a){a=document.createElement('a');a.id='qucsLink';a.className='btn btn-sm btn-outline-secondary';a.textContent='Download link (right-click \u2192 Save link as\u2026)';$('dlQucs').after(a)}
+  a.href='data:text/plain;charset=utf-8,'+encodeURIComponent($('qucs').value);a.download='microstrip_filter_'+TOPONOW+'.sch';
+}
+function run(){
+  if($('go').disabled)return;const st=$('st');const {p,e}=readP();
+  if(e.length){st.style.color='var(--warnink)';st.textContent=e[0];return}
+  $('go').disabled=true;st.style.color='var(--muted)';st.textContent='Synthesizing…';
+  const topo=$('topo').value;
+  setTimeout(()=>{try{
+    const t0=Date.now(),rr=runDesign(TOPO[topo].fn,p,$('tune').checked,$('refine').checked),d=rr.d,s=rr.s,pq=rr.p;
+    CUR={d,s,p:pq};TOPONOW=topo;
+    const ev=evalDesign(d,pq,1*s,601);
+    const U=p.f0>=1e9?1e9:1e6,uName=U===1e9?'GHz':'MHz',fa=ev.fr[0],fb=ev.fr[ev.fr.length-1];
+    SIM=Object.assign(ev,{ymin:-80,U,uName,f0:p.f0,bw:p.bw});
+    let wr=-99,wl=0;for(let k=0;k<ev.fr.length;k++){if(Math.abs(ev.fr[k]-p.f0)<=p.bw/2*0.9){wr=Math.max(wr,ev.s11[k]);wl=Math.min(wl,ev.s21[k])}}
+    const sim=makeSim(d.build(s)),fc=bandCentre(sim,pq);
+    drawPlot(null);
+    const warns=[...new Set(d.warn)];
+    if(p.Q>0)warns.push(`Conductor/dielectric loss is included as an unloaded Q of ${p.Q} on all lines (the ideal overlay stays lossless).`);
+    $('alerts').innerHTML=warns.map(x=>`<div class="alert alert-warning">${x}</div>`).join('');
+    $('sum').innerHTML=[['Centre (−3 dB mid)',fmtF(fc)],['Worst in-band S11',wr.toFixed(1)+' dB'],['Worst in-band S21',wl.toFixed(2)+' dB'],['Tuning factor',s.toFixed(4)],['Ideal ripple RL',p.resp==='cheb'?(-10*Math.log10(1-Math.pow(10,-p.rip/10))).toFixed(1)+' dB ('+p.rip+' dB ripple)':'Butterworth']]
+      .map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+    $('dims').innerHTML=table(d.cols,d.rows(s))+'<ul class="plain">'+d.summary(s).map(([k,v])=>`<li><b>${k}:</b> ${v}</li>`).join('')+'</ul>';
+    drawLayout();
+    if(d.qucs){
+      const q=d.qucs(s),qa=Math.max(p.f0*(1-p.span*p.FBW/2),p.f0*0.05),qb=p.f0*(1+p.span*p.FBW/2);
+      try{$('qucs').value=qucsSch(q,pq,qa,qb,601)}catch(err){$('qucs').value='Qucs-S export failed: '+err.message}
+      $('qucsNote').textContent='Physical microstrip export: Qucs-S SUBST, MLIN, MCOUPLED, MGAP and MOPEN models. It is an independent model (Hammerstad/Kirschning, open-end effects), so expect a small frequency shift relative to this plot. Lengths are the tuned values. Wires connect every pin; ports P1/P2 are 50 Ω Pac sources with grounded returns.';
+    }else{
+      $('qucs').value='Not available for this topology: Qucs-S only provides two-line coupled microstrip (MCOUPLED), so an N-line comb/interdigital array cannot be expressed exactly. Use an EM solver, or build it from the dimensions table.';
+      $('qucsNote').textContent='';
+    }
+    setQucsLink();
+    st.style.color='var(--okink)';st.textContent='Done in '+((Date.now()-t0)/1000).toFixed(1)+' s. '+(rr.p.tapK&&rr.p.tapK!==1?'Tap positions refined (×'+rr.p.tapK.toFixed(2)+').':'');
+  }catch(err){st.style.color='var(--warnink)';st.textContent='Error: '+(err&&err.message?err.message:err);console.error(err)}finally{$('go').disabled=false}},40);
+}
+$('go').onclick=run;
+['topo','resp'].forEach(id=>$(id).addEventListener('change',()=>{syncVis();if(id==='topo'){const t=$('topo').value;if(t==='gap'){if(+$('er').value<6){$('er').value=9.8;$('h').value=0.635;$('f0').value=10000;$('bw').value=200}}}}));
+$('simBtn').addEventListener('click',e=>{e.stopPropagation();$('simMenu').classList.toggle('open')});
+$('tlf').addEventListener('click',()=>$('simMenu').classList.remove('open'));
+document.addEventListener('click',()=>$('simMenu').classList.remove('open'));
+$('openQucs').addEventListener('click',()=>{$('qucsCard').scrollIntoView({behavior:'smooth',block:'nearest'})});
+$('dlQucs').addEventListener('click',()=>{setQucsLink();$('qucsLink').click()});
+$('copyQucs').addEventListener('click',async()=>{
+  const ta=$('qucs');ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);let ok=false;
+  try{ok=document.execCommand('copy')}catch(_){}
+  if(!ok){try{await navigator.clipboard.writeText(ta.value);ok=true}catch(_){}}
+  $('copyQucs').textContent=ok?'Copied':'Selected: press Ctrl+C';setTimeout(()=>$('copyQucs').textContent='Copy text',2500)});
+syncVis();setTimeout(run,300);
+
+})();
+</script>
+</body>
+</html>

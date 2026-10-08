@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>RF Design Tools - Direct-Coupled Filter Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@1,900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --ink:#212529; --muted:#6c757d; --card:#ffffff; --line:#dee2e6; --boxbg:#f8f9fa; --thead:#e9ecef;
+  --hover:#f1f3f5; --nav:#1c2f4a; --field:#ffffff; --primary:#0d6efd; --grid:#e6e6e6; --ok:#d1e7dd; --okink:#0f5132;
+  --warnbg:#fff3cd; --warnink:#664d03; --warnline:#ffecb5; --infobg:#cff4fc; --infoink:#055160;
+  --stripe:#f6f8fa;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16191d; --ink:#e4e7ea; --muted:#9aa4ad; --card:#1e2227; --line:#343a40; --boxbg:#1a1e22; --thead:#2a2f35;
+    --hover:#262b31; --nav:#0f1b2d; --field:#14181c; --primary:#6ea8fe; --grid:#2f353b; --ok:#143626; --okink:#a3cfbb;
+    --warnbg:#332701; --warnink:#ffda6a; --warnline:#664d03; --infobg:#032830; --infoink:#6edff6; --stripe:#1c2025;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16191d; --ink:#e4e7ea; --muted:#9aa4ad; --card:#1e2227; --line:#343a40; --boxbg:#1a1e22; --thead:#2a2f35;
+  --hover:#262b31; --nav:#0f1b2d; --field:#14181c; --primary:#6ea8fe; --grid:#2f353b; --ok:#143626; --okink:#a3cfbb;
+  --warnbg:#332701; --warnink:#ffda6a; --warnline:#664d03; --infobg:#032830; --infoink:#6edff6; --stripe:#1c2025;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+h2,h5,p{margin:0}
+/* navbar */
+.navbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--nav);display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 16px}
+.brand{font:italic 900 22px Lato,system-ui,sans-serif;color:#fff;text-decoration:none;margin-right:12px;letter-spacing:.2px}
+.brand span{color:#ffc107}
+.nav-group{display:flex;flex-wrap:wrap;gap:8px}
+.nav-right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-block;font:400 16px/1.5 inherit;font-family:inherit;text-align:center;text-decoration:none;cursor:pointer;border:1px solid transparent;border-radius:.375rem;padding:.375rem .75rem;color:#212529;background:transparent;user-select:none}
+.btn-sm{font-size:14px;padding:.25rem .5rem;border-radius:.25rem}
+.btn-outline-light{color:#f8f9fa;border-color:#f8f9fa}
+.btn-outline-light:hover,.btn-outline-light.active{background:#f8f9fa;color:#212529}
+.btn-warning{background:#ffc107;border-color:#ffc107;color:#000}
+.btn-info{background:#0dcaf0;border-color:#0dcaf0;color:#000}
+.btn-success{background:#198754;border-color:#198754;color:#fff}
+.btn-outline-secondary{color:var(--muted);border-color:var(--muted)}
+.btn-outline-secondary:hover{background:var(--muted);color:var(--bg)}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.cell-ok:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+/* layout */
+.container-fluid{padding:12px 16px 32px}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.tool-name{font-size:2rem;font-weight:500;line-height:1.2;margin:6px 0 10px}
+.box_form{flex:0 0 auto;width:370px;max-width:100%;padding:10px;background:var(--boxbg);border:1px solid var(--line);border-radius:.375rem}
+.box_form.right{width:330px}
+.box{flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:14px}
+@media (max-width:1180px){.box_form,.box_form.right{width:100%}}
+.box_form h5{text-align:center;font-size:1.25rem;font-weight:500;margin:4px 0 8px}
+/* tables */
+.table{width:100%;border-collapse:collapse;margin-bottom:12px;color:var(--ink)}
+.table th,.table td{padding:.4rem .5rem;border-bottom:1px solid var(--line);vertical-align:middle;text-align:left}
+.rf_table_style thead td{background:var(--thead);font-weight:600}
+.table-hover tbody tr:hover{background:var(--hover)}
+.table-bordered th,.table-bordered td{border:1px solid var(--line)}
+.table-striped tbody tr:nth-child(odd){background:var(--stripe)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
+input[type=number],select{font:inherit;font-size:15px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:.25rem;padding:.2rem .35rem;max-width:100%}
+select{padding:.25rem .3rem}
+select.wide{width:100%}
+small.hint{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+[hidden]{display:none!important}
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:.375rem}
+.shadow-sm{box-shadow:0 .125rem .25rem rgba(0,0,0,.075)}
+.card-body{padding:12px 16px 6px}
+.card-title{font-size:1.25rem;font-weight:500;margin:0 0 6px}
+.card-text{padding:0 12px 12px}
+.text-center{text-align:center}
+.chart-wrap{padding:8px 8px 4px}
+#plot{display:block;width:100%;touch-action:pan-y}
+.alert{padding:.6rem .9rem;border:1px solid;border-radius:.375rem;font-size:14.5px;margin-bottom:8px}
+.alert-warning{background:var(--warnbg);color:var(--warnink);border-color:var(--warnline)}
+.alert-info{background:var(--infobg);color:var(--infoink);border-color:transparent}
+#alerts .alert:last-child{margin-bottom:0}
+/* compatibility matrix */
+.compat th,.compat td{text-align:center;font-size:12.5px;padding:.3rem .25rem;border:1px solid var(--line)}
+.compat th:first-child,.compat td:first-child{text-align:left}
+.compat td.cell-ok{background:var(--ok);color:var(--okink);cursor:pointer;font-weight:700}
+.compat td.cell-ok:hover{filter:brightness(.94)}
+.compat td.cell-ok.sel{outline:2px solid var(--primary);outline-offset:-2px}
+.compat td.cell-no{color:var(--muted)}
+/* schematic */
+#schematic_viewport{width:100%;height:420px;overflow:hidden;border:1px solid #ddd;background:#fff;cursor:grab;touch-action:none}
+#schematic_viewport:active{cursor:grabbing}
+#svg_display{width:100%;height:100%;display:block}
+.schematic-toolbar{margin-bottom:6px}
+/* dropdown (renamed so host stylesheets such as Trilium's Bootstrap rules cannot override it) */
+.tl-dd{position:relative;display:inline-block}
+.tl-dd-menu{display:none!important;position:absolute;left:0;top:100%;min-width:12rem;background:var(--card);border:1px solid var(--line);border-radius:.375rem;padding:.35rem 0;margin-top:2px;z-index:20;box-shadow:0 .5rem 1rem rgba(0,0,0,.15)}
+.tl-dd-menu.open{display:block!important}
+.tl-dd-item{display:block;width:100%;text-align:left;background:none;border:0;padding:.35rem 1rem;color:var(--ink);font:inherit;cursor:pointer}
+.tl-dd-item:hover{background:var(--hover)}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0}
+textarea{width:100%;min-height:260px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:.25rem;padding:8px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0}
+.sum div{padding:6px 16px 10px}
+.sum dt{font-size:13px;color:var(--muted)}
+.sum dd{margin:0;font:500 17px ui-monospace,Menlo,Consolas,monospace}
+.sum{margin:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.scrollx{overflow-x:auto}
+footer{text-align:center;color:var(--muted);font-size:14px;padding:8px 0 16px}
+</style>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row"><h2 class="tool-name">Direct-Coupled Filter Design</h2></div>
+  <div class="row">
+
+    <!-- LEFT: filter type -->
+    <div class="box_form" id="leftForm">
+      <h5>Filter Type</h5>
+      <table class="rf_table_style table table-hover">
+        <thead><tr><td>Parameter</td><td>Value</td></tr></thead>
+        <tbody>
+          <tr><td>Resonator</td><td>
+            <select id="Res" class="wide">
+              <optgroup label="Lumped">
+                <option value="par" selected>Parallel LC (shunt)</option>
+                <option value="ser">Series LC</option>
+              </optgroup>
+              <optgroup label="Transmission line">
+                <option value="stub">Shorted λ/4 stub (shunt)</option>
+                <option value="half">Half-wave line (λ/2)</option>
+              </optgroup>
+            </select></td></tr>
+          <tr><td>Inverter</td><td><select id="Inv" class="wide"></select></td></tr>
+          <tr><td>Response Type</td><td>
+            <select id="Response"><option value="cheb" selected>Chebyshev</option><option value="butter">Butterworth</option></select></td></tr>
+          <tr class="Ripple_input"><td>Ripple (dB)</td><td><input type="number" id="Ripple" value="0.1" step="0.05" min="0.001" max="3" style="width:5em"></td></tr>
+          <tr><td>Order</td><td><input type="number" id="Order" value="3" min="1" max="10" step="1" style="width:4em"></td></tr>
+          <tr><td>Lower Cutoff Freq</td><td>
+            <input type="number" id="f1" min="0" value="420" step="any" style="width:5.5em">
+            <select id="f1_scale"><option value="1">Hz</option><option value="2">kHz</option><option value="3" selected>MHz</option><option value="4">GHz</option></select></td></tr>
+          <tr><td>Higher Cutoff Freq</td><td>
+            <input type="number" id="f2" min="0" value="450" step="any" style="width:5.5em">
+            <select id="f2_scale"><option value="1">Hz</option><option value="2">kHz</option><option value="3" selected>MHz</option><option value="4">GHz</option></select></td></tr>
+          <tr><td>Z<sub>source</sub> = Z<sub>load</sub> (&Omega;)</td><td><input type="number" id="ZS" min="1" value="50" style="width:4em"></td></tr>
+          <tr class="X_input"><td id="XLbl">Resonator reactance X (&Omega;)</td><td>
+            <input type="number" id="X" min="0" value="100" step="any" style="width:5em"><small class="hint" id="xHint"></small></td></tr>
+          <tr class="Zr_input"><td>Stub impedance Z<sub>r</sub> (&Omega;)</td><td><input type="number" id="Zr" min="1" value="15" step="any" style="width:5em"></td></tr>
+          <tr class="eeff_input"><td>Effective &epsilon;<sub>r</sub></td><td><input type="number" id="eeff" min="1" value="1" step="any" style="width:5em"></td></tr>
+          <tr><td>Unloaded Q (0 = lossless)</td><td><input type="number" id="Q" min="0" value="0" step="any" style="width:5em"></td></tr>
+        </tbody>
+      </table>
+
+      <div id="compatMsg" class="alert alert-info" hidden></div>
+      <h5>Compatible Combinations</h5>
+      <table class="compat table" id="compat"></table>
+      <small class="hint" style="margin:-6px 0 8px">Click a green cell to select that resonator and inverter together.</small>
+
+      <div class="btn-row">
+        <div class="tl-dd">
+          <button class="btn btn-warning" type="button" id="simBtn">Simulation Files &#9662;</button>
+          <div class="tl-dd-menu" id="simMenu">
+            <button class="tl-dd-item" type="button" id="openNet">SPICE netlist</button>
+            <button class="tl-dd-item" type="button" id="openQucs">Qucs-S schematic (.sch)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="box">
+      <div class="card shadow-sm"><div class="chart-wrap"><canvas id="plot" aria-label="Simulated filter response"></canvas></div></div>
+      <div id="alerts"></div>
+
+      <div class="card">
+        <div class="card-body"><h5 class="card-title">Schematic</h5></div>
+        <div class="card-text text-center">
+          <div class="schematic-toolbar">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="zin">&#43; Zoom In</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="zout">&minus; Zoom Out</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="zfit">Fit</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="zdl">Download</button>
+          </div>
+          <div id="schematic_viewport"><svg id="svg_display" xmlns="http://www.w3.org/2000/svg"><g id="schG"></g></svg></div>
+          <p class="hint" style="font-size:13px;color:var(--muted);margin-top:6px" id="schNote"></p>
+        </div>
+      </div>
+
+      <div class="card"><div class="card-body"><h5 class="card-title">Prototype and Inverter Values</h5></div>
+        <div class="card-text"><div class="two" id="protoWrap"></div>
+        <p style="font-size:13px;color:var(--muted)" id="protoNote"></p></div></div>
+
+      <div class="card" id="netCard" hidden><div class="card-body"><h5 class="card-title">SPICE Netlist</h5></div>
+        <div class="card-text"><textarea id="netlist" readonly spellcheck="false"></textarea>
+        <div class="btn-row"><button class="btn btn-sm btn-outline-secondary" type="button" id="copy">Copy netlist</button></div></div></div>
+
+      <div class="card" id="qucsCard"><div class="card-body"><h5 class="card-title">Qucs-S Schematic</h5></div>
+        <div class="card-text"><textarea id="qucs" readonly spellcheck="false"></textarea>
+        <div class="btn-row"><button class="btn btn-sm btn-success" type="button" id="dlQucs">Download .sch</button><button class="btn btn-sm btn-outline-secondary" type="button" id="copyQucs">Copy text</button></div>
+        <p style="font-size:13px;color:var(--muted)">Open the file with File &rarr; Open in Qucs-S. The export is lossless (the Q setting is not carried over), transmission lines are exported as TLIN with lengths in free space (&epsilon;eff = 1), and a lin S-parameter sweep matching the current frequency range is included. Add a rectangular plot of dB(S[2,1]) and dB(S[1,1]) after simulating. If the buttons are blocked by the host app, click in the box, press Ctrl+A then Ctrl+C, and save the text as a .sch file.</p></div></div>
+    </div>
+
+    <!-- RIGHT: simulation -->
+    <div class="box_form right" id="rightForm">
+      <h5>Simulation Parameters</h5>
+      <div style="text-align:center;margin-bottom:8px">
+        <label><input type="radio" name="fmode" value="fmode1" checked> fstart | fstop</label>
+        &nbsp;&nbsp;
+        <label><input type="radio" name="fmode" value="fmode2"> fc | span</label>
+      </div>
+      <table class="rf_table_style table">
+        <thead><tr><td>Parameter</td><td>Value</td></tr></thead>
+        <tbody>
+          <tr class="sweep1"><td>Start Freq</td><td><input type="number" id="f_start" min="0" step="any" value="336" style="width:5.5em">
+            <select id="f_start_scale"><option value="1">Hz</option><option value="2">kHz</option><option value="3" selected>MHz</option><option value="4">GHz</option></select></td></tr>
+          <tr class="sweep1"><td>End Freq</td><td><input type="number" id="f_stop" min="0" step="any" value="540" style="width:5.5em">
+            <select id="f_stop_scale"><option value="1">Hz</option><option value="2">kHz</option><option value="3" selected>MHz</option><option value="4">GHz</option></select></td></tr>
+          <tr class="sweep2"><td>f<sub>0</sub></td><td><input type="number" id="f0_span" min="0" step="any" value="438" style="width:5.5em">
+            <select id="f0_sweep_scale"><option value="1">Hz</option><option value="2">kHz</option><option value="3" selected>MHz</option><option value="4">GHz</option></select></td></tr>
+          <tr class="sweep2"><td>Span</td><td><input type="number" id="fspan" min="0" step="any" value="204" style="width:5.5em">
+            <select id="span_scale"><option value="1">Hz</option><option value="2">kHz</option><option value="3" selected>MHz</option><option value="4">GHz</option></select></td></tr>
+          <tr><td>Points</td><td><input type="number" id="Points" min="11" max="4001" value="601" style="width:5em"></td></tr>
+        </tbody>
+      </table>
+
+      <h5>Display Parameters</h5>
+      <table class="rf_table_style table">
+        <thead><tr><td>Parameter</td><td>Value</td></tr></thead>
+        <tbody>
+          <tr><td>Scale (dB/div)</td><td><input type="number" id="y_axis_scale" min="1" value="10" style="width:4em"></td></tr>
+          <tr><td>Maximum (dB)</td><td><input type="number" id="y_axis_max" value="0" style="width:4em"></td></tr>
+          <tr><td>Minimum (dB)</td><td><input type="number" id="y_axis_min" min="-200" value="-80" style="width:4em"></td></tr>
+          <tr><td>Ideal prototype</td><td><label><input type="checkbox" id="ideal" checked> Overlay</label></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<footer>Direct-coupled filter synthesis: narrowband design equations, response simulated from the synthesized circuit.</footer>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const PI = Math.PI;
+
+/* ---------- complex arithmetic ---------- */
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1]], sub=(a,b)=>[a[0]-b[0],a[1]-b[1]];
+const mul=(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]], sc=(a,s)=>[a[0]*s,a[1]*s];
+const div=(a,b)=>{const d=b[0]*b[0]+b[1]*b[1];return [(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d];};
+const cabs=a=>Math.hypot(a[0],a[1]);
+const ONE=[1,0], ZERO=[0,0];
+const mm=(m,n)=>[add(mul(m[0],n[0]),mul(m[1],n[2])),add(mul(m[0],n[1]),mul(m[1],n[3])),add(mul(m[2],n[0]),mul(m[3],n[2])),add(mul(m[2],n[1]),mul(m[3],n[3]))];
+
+/* ---------- ABCD element models ---------- */
+const serBlock=zf=>f=>[ONE,zf(f),ZERO,ONE];
+const shBlock=yf=>f=>[ONE,ZERO,yf(f),ONE];
+const Zind=(L,Q)=>f=>{const x=2*PI*f*L;return [Q>0?x/Q:0,x];};
+const Zcap=C=>f=>[0,-1/(2*PI*f*C)];
+const Yind=(L,Q)=>{const z=Zind(L,Q);return f=>div(ONE,z(f));};
+const Ycap=C=>f=>[0,2*PI*f*C];
+function lineGamma(th0,f0,Q,f){
+  const th=th0*f/f0, a=Q>0?th/(2*Q):0;
+  return {ch:[Math.cosh(a)*Math.cos(th),Math.sinh(a)*Math.sin(th)], sh:[Math.sinh(a)*Math.cos(th),Math.cosh(a)*Math.sin(th)]};
+}
+const lineBlock=(Z,th0,f0,Q)=>f=>{const {ch,sh}=lineGamma(th0,f0,Q,f);return [ch,sc(sh,Z),sc(sh,1/Z),ch];};
+const stubY=(Z,th0,f0,Q)=>f=>{const {ch,sh}=lineGamma(th0,f0,Q,f); if(cabs(sh)<1e-9) return [1e9,0]; return div(ch,sc(sh,Z));};
+function sparams(M,Z0){
+  const p=add(M[0],sc(M[1],1/Z0)), q=add(sc(M[2],Z0),M[3]), den=add(p,q);
+  return {s21:div([2,0],den), s11:div(sub(p,q),den)};
+}
+const dB=a=>20*Math.log10(Math.max(cabs(a),1e-12));
+
+/* ---------- formatting ---------- */
+function eng(v,unit){
+  if(!isFinite(v)) return '—';
+  const a=Math.abs(v); if(a===0) return '0 '+unit;
+  const P=[[1e-15,'f'],[1e-12,'p'],[1e-9,'n'],[1e-6,'µ'],[1e-3,'m'],[1,''],[1e3,'k'],[1e6,'M'],[1e9,'G']];
+  let c=P[0]; for(const x of P) if(a>=x[0]*0.99995) c=x;
+  return `${+(v/c[0]).toPrecision(4)} ${c[1]}${unit}`;
+}
+const fx=(v,d=3)=>isFinite(v)?String(+v.toPrecision(d)):'—';
+const sv=v=>v.toExponential(5);
+
+/* ---------- prototypes and inverter equations ---------- */
+function protoG(type,N,Lar){
+  const g=[1];
+  if(type==='butter'){for(let k=1;k<=N;k++)g[k]=2*Math.sin((2*k-1)*PI/(2*N));g[N+1]=1;return g;}
+  const beta=Math.log(1/Math.tanh(Lar/17.37)), gam=Math.sinh(beta/(2*N)), a=[], b=[];
+  for(let k=1;k<=N;k++){a[k]=Math.sin((2*k-1)*PI/(2*N));b[k]=gam*gam+Math.pow(Math.sin(k*PI/N),2);}
+  g[1]=2*a[1]/gam;
+  for(let k=2;k<=N;k++)g[k]=4*a[k-1]*a[k]/(b[k-1]*g[k-1]);
+  g[N+1]=(N%2===1)?1:Math.pow(1/Math.tanh(beta/4),2);
+  return g;
+}
+// slope[i] for resonators i=1..N; T is the terminating admittance (J) or impedance (K)
+function invVals(slope,g,w,T){
+  const N=g.length-2,o=[];
+  o[0]=Math.sqrt(T*slope[1]*w/(g[0]*g[1]));
+  for(let i=1;i<N;i++)o[i]=w*Math.sqrt(slope[i]*slope[i+1]/(g[i]*g[i+1]));
+  o[N]=Math.sqrt(T*slope[N]*w/(g[N]*g[N+1]));
+  return o;
+}
+
+/* ---------- catalogue and compatibility ---------- */
+const RES={
+  par: {name:'Lumped parallel LC',   tl:false},
+  ser: {name:'Lumped series LC',     tl:false},
+  stub:{name:'Shorted λ/4 stub',     tl:true},
+  half:{name:'Half-wave line',       tl:true}
+};
+const INV={
+  serC:{label:'Series capacitor (J)',  short:'Series C'},
+  serL:{label:'Series inductor (J)',   short:'Series L'},
+  shL: {label:'Shunt inductor (K)',    short:'Shunt L'},
+  shC: {label:'Shunt capacitor (K)',   short:'Shunt C'},
+  qw:  {label:'Quarter-wave line',     short:'λ/4 line'}
+};
+const COMPAT={
+  par: ['serC','serL','qw'],
+  ser: ['shL','shC','qw'],
+  stub:['serC','serL','qw'],
+  half:['serC','serL','shL','shC']
+};
+const WHY={
+  par:'Shunt tanks absorb the π-network legs of series couplers, so J-type inverters fit.',
+  ser:'Series branches absorb the T-network legs of shunt couplers, so K-type inverters fit.',
+  stub:'Series couplers detune a stub, and its length is trimmed to absorb that.',
+  half:'Phase of each discontinuity is absorbed into the line lengths, so any lumped coupler fits.'
+};
+
+/* ---------- circuit builder ---------- */
+function makeBuilder(p){
+  const blocks=[],sp=[],seq=[],comps=[]; let n=0;
+  const nd=i=>i===0?'in':'n'+i, clean=s=>s.replace(/[^A-Za-z0-9_]/g,'_');
+  const lamMM=299792458/(p.f0*Math.sqrt(p.eeff))*1000;
+  const B={blocks,sp,seq,comps,get last(){return nd(n);},
+    ser(sym,name,val,role){
+      const u=sym==='C'?'F':'H';
+      blocks.push(serBlock(sym==='C'?Zcap(val):Zind(val,p.Q)));
+      sp.push(`${sym}${clean(name)} ${nd(n)} ${nd(n+1)} ${sv(val)}`);n++;
+      seq.push({t:'ser',sym,lab:[name,eng(val,u)]});
+      comps.push({name,role,val:eng(val,u),note:''});
+    },
+    sh(sym,name,val,role){
+      const u=sym==='C'?'F':'H';
+      blocks.push(shBlock(sym==='C'?Ycap(val):Yind(val,p.Q)));
+      sp.push(`${sym}${clean(name)} ${nd(n)} 0 ${sv(val)}`);
+      seq.push({t:'sh',sym,lab:[name,eng(val,u)]});
+      comps.push({name,role,val:eng(val,u),note:''});
+    },
+    tank(i,L,C){
+      blocks.push(shBlock(f=>add(Ycap(C)(f),Yind(L,p.Q)(f))));
+      sp.push(`LR${i} ${nd(n)} 0 ${sv(L)}`,`CR${i} ${nd(n)} 0 ${sv(C)}`);
+      seq.push({t:'sh',sym:'LC',lab:[`L${i} ${eng(L,'H')}`,`C${i} ${eng(C,'F')}`]});
+      comps.push({name:`L${i}`,role:`Resonator ${i}`,val:eng(L,'H'),note:'Shunt inductor'});
+      comps.push({name:`C${i}`,role:`Resonator ${i}`,val:eng(C,'F'),note:C<=0?'Not realizable (≤ 0)':'Shunt capacitor'});
+    },
+    branch(i,L,C){
+      blocks.push(serBlock(Zind(L,p.Q)),serBlock(Zcap(C)));
+      sp.push(`LR${i} ${nd(n)} ${nd(n+1)} ${sv(L)}`,`CR${i} ${nd(n+1)} ${nd(n+2)} ${sv(C)}`);n+=2;
+      seq.push({t:'ser',sym:'L',lab:[`L${i}`,eng(L,'H')]},{t:'ser',sym:'C',lab:[`C${i}`,eng(C,'F')]});
+      comps.push({name:`L${i}`,role:`Resonator ${i}`,val:eng(L,'H'),note:L<=0?'Not realizable (≤ 0)':'Series inductor'});
+      comps.push({name:`C${i}`,role:`Resonator ${i}`,val:eng(C,'F'),note:'Series capacitor'});
+    },
+    tl(name,Z,th,role){
+      blocks.push(lineBlock(Z,th,p.f0,p.Q));
+      const td=th/(2*PI)/p.f0;
+      sp.push(`T${clean(name)} ${nd(n)} 0 ${nd(n+1)} 0 Z0=${fx(Z,6)} TD=${td.toExponential(5)}`);n++;
+      const deg=th*180/PI,len=th/(2*PI)*lamMM;
+      seq.push({t:'ser',sym:'TL',lab:[name,`${fx(Z,3)} Ω ${fx(deg,4)}°`]});
+      comps.push({name,role,val:`Z = ${fx(Z,4)} Ω, θ = ${fx(deg,4)}°`,note:`l = ${fx(len,4)} mm at εeff = ${fx(p.eeff,3)}`});
+    },
+    stub(name,Z,th,role){
+      blocks.push(shBlock(stubY(Z,th,p.f0,p.Q)));
+      const td=th/(2*PI)/p.f0;
+      sp.push(`T${clean(name)} ${nd(n)} 0 0 0 Z0=${fx(Z,6)} TD=${td.toExponential(5)}`);
+      const deg=th*180/PI,len=th/(2*PI)*lamMM;
+      seq.push({t:'sh',sym:'stub',lab:[name,`${fx(Z,3)} Ω ${fx(deg,4)}°`]});
+      comps.push({name,role,val:`Z = ${fx(Z,4)} Ω, θ = ${fx(deg,4)}°`,note:`Shorted stub, l = ${fx(len,4)} mm`});
+    }
+  };
+  return B;
+}
+
+/* ---------- synthesis ---------- */
+function synthesize(p){
+  const N=p.N,w=p.bw/p.f0,w0=2*PI*p.f0,Z0=p.z0,Y0=1/Z0;
+  const g=protoG(p.resp,N,p.rip), warn=[], B=makeBuilder(p);
+  const cn=(s,i,j)=>N>=9?`${s}${i},${j}`:`${s}${i}${j}`;
+  const roleOf=i=>i===0?'Input coupling':(i===N?'Output coupling':`Coupling ${i}–${i+1}`);
+  const flat=v=>{const a=[];for(let i=1;i<=N;i++)a[i]=v;return a;};
+  let inverters=[],invUnit='',invSym='J',slopeTxt='',normQ=null;
+
+  if(w>0.6)warn.push('Fractional bandwidth is above 60%. The narrowband inverter approximation fails here, so expect a distorted response.');
+  else if(w>0.2)warn.push('Fractional bandwidth is above 20%. The narrowband inverter approximation degrades, so the response will drift from the ideal prototype.');
+
+  // J-type coupler (series C or L) between shunt-type resonators. adjS is the shunt susceptance it leaves on each neighbour.
+  const couplerJ=(kind,Jv,idx,isEnd)=>{
+    if(Jv>=0.999*Y0){warn.push(`J${idx} is not below the line admittance 1/Z₀, so that coupling cannot be realized. ${p.res==='par'?'Raise the resonator reactance X.':'Raise the stub impedance Zr or narrow the bandwidth.'}`);Jv=0.999*Y0;}
+    if(kind==='serC'){
+      if(!isEnd)return {sym:'C',val:Jv/w0,adjS:-Jv};
+      const Bv=Jv/Math.sqrt(1-(Jv/Y0)**2),Bs=Bv*Y0*Y0/(Y0*Y0+Bv*Bv);
+      return {sym:'C',val:Bv/w0,adjS:-Bs};
+    }
+    if(!isEnd)return {sym:'L',val:1/(w0*Jv),adjS:Jv};
+    const Xv=Math.sqrt(1/(Jv*Jv)-Z0*Z0);
+    return {sym:'L',val:Xv/w0,adjS:Xv*Jv*Jv};
+  };
+  // K-type coupler (shunt L or C) between series-type resonators. adjX is the series reactance left on each neighbour.
+  const couplerK=(kind,Kv,idx,isEnd)=>{
+    if(Kv>=0.999*Z0){warn.push(`K${idx} is not below Z₀, so that coupling cannot be realized. Lower the resonator reactance X.`);Kv=0.999*Z0;}
+    if(kind==='shL'){
+      if(!isEnd)return {sym:'L',val:Kv/w0,adjX:-Kv};
+      const Xb=Kv/Math.sqrt(1-(Kv/Z0)**2),Xs=Xb*Z0*Z0/(Z0*Z0+Xb*Xb);
+      return {sym:'L',val:Xb/w0,adjX:-Xs};
+    }
+    if(!isEnd)return {sym:'C',val:1/(w0*Kv),adjX:Kv};
+    const Bv=Math.sqrt(1/(Kv*Kv)-Y0*Y0);
+    return {sym:'C',val:Bv/w0,adjX:Bv*Kv*Kv};
+  };
+  const lineWarn=(Zl,nm)=>{if(Zl<10||Zl>200)warn.push(`Inverter line ${nm} is ${fx(Zl,4)} Ω, which is hard to build. Adjust the resonator impedance or reactance.`);};
+
+  /* quarter-wave line inverters, any resonator except the half-wave line */
+  if(p.inv==='qw'){
+    const shuntType=(p.res==='par'||p.res==='stub');
+    const KAPPA=1;   // each adjacent λ/4 line adds KAPPA·(π/4)·|J or K| of slope to a resonator
+    let target,Ys,L0,C0;
+    if(p.res==='par'){target=1/p.X;slopeTxt=`Effective susceptance slope b = ${fx(target,4)} S (X = ${fx(p.X,4)} Ω)`;}
+    else if(p.res==='ser'){target=p.X;slopeTxt=`Effective reactance slope x = ${fx(target,4)} Ω`;}
+    else{Ys=1/p.Zr;target=PI/4*Ys;slopeTxt=`Stub impedance Zr = ${fx(p.Zr,4)} Ω, stub susceptance slope π/4 · Yr = ${fx(PI/4*Ys,4)} S`;}
+    // slope the resonator itself must provide, after the adjacent inverter lines contribute theirs
+    let beff=flat(target),V=invVals(beff,g,w,shuntType?Y0:Z0);
+    if(p.res==='stub'){
+      for(let it=0;it<12;it++){V=invVals(beff,g,w,Y0);for(let i=1;i<=N;i++)beff[i]=target+KAPPA*PI/4*(V[i-1]+V[i]);}
+    }
+    const own=[];
+    for(let i=1;i<=N;i++){
+      own[i]=(p.res==='stub')?target:target-KAPPA*PI/4*(V[i-1]+V[i]);
+      if(own[i]<=0)warn.push(`Resonator ${i}: the inverter lines contribute more slope than the target. ${shuntType?'Lower the resonator reactance X.':'Raise the resonator reactance X.'}`);
+    }
+    inverters=V;invUnit=shuntType?'S':'Ω';invSym=shuntType?'J':'K';
+    for(let i=0;i<=N;i++){
+      const Zl=shuntType?1/V[i]:V[i];
+      lineWarn(Zl,`${i}–${i+1}`);
+      B.tl(cn('TL',i,i+1),Zl,PI/2,i===0?'Input inverter':(i===N?'Output inverter':`Inverter ${i}–${i+1}`));
+      if(i<N){
+        const o=Math.max(own[i+1]||1e-6,1e-6);
+        if(p.res==='par')B.tank(i+1,1/(w0*o),o/w0);
+        else if(p.res==='ser')B.branch(i+1,o/w0,1/(w0*o));
+        else B.stub(`ST${i+1}`,p.Zr,PI/2,`Resonator ${i+1}`);
+      }
+    }
+  }
+
+  /* lumped parallel tanks with series C / L couplers */
+  else if(p.res==='par'){
+    const b=1/p.X,L=p.X/w0,Ct=b/w0;
+    const J=invVals(flat(b),g,w,Y0);inverters=J;invUnit='S';invSym='J';
+    slopeTxt=`Susceptance slope b = ${fx(b,4)} S (X = ${fx(p.X,4)} Ω), L = ${eng(L,'H')}, ideal tank C = ${eng(Ct,'F')}`;
+    const cc=[];
+    for(let i=0;i<=N;i++)cc[i]=couplerJ(p.inv,J[i],i===0?'01':(i===N?`${N}${N+1}`:`${i}${i+1}`),i===0||i===N);
+    B.ser(cc[0].sym,cn(cc[0].sym,0,1),cc[0].val,roleOf(0));
+    for(let i=1;i<=N;i++){
+      const adj=cc[i-1].adjS+cc[i].adjS;
+      let Li=L,Cp=Ct+adj/w0;
+      if(p.inv==='serL'){
+        // inductive couplers leave shunt inductors on the tank and add slope, so trim the tank inductor to keep the slope at b
+        if(b-adj<=0){warn.push(`Resonator ${i}: the series-inductor couplers load the tank more than its susceptance slope. Lower the resonator reactance X.`);Li=L;Cp=Ct+adj/w0;}
+        else{Li=1/(w0*(b-adj));Cp=Ct;}
+      }
+      if(Cp<=0)warn.push(`Resonator ${i} needs a negative capacitor after absorbing the coupling. Lower the resonator reactance X.`);
+      B.tank(i,Li,Cp);
+      B.ser(cc[i].sym,cn(cc[i].sym,i,i+1),cc[i].val,roleOf(i));
+    }
+  }
+
+  /* lumped series branches with shunt L / C couplers */
+  else if(p.res==='ser'){
+    const x=p.X,Lt=x/w0,Cr=1/(w0*x);
+    const K=invVals(flat(x),g,w,Z0);inverters=K;invUnit='Ω';invSym='K';
+    slopeTxt=`Reactance slope x = ${fx(x,4)} Ω, ideal branch L = ${eng(Lt,'H')}, C = ${eng(Cr,'F')}`;
+    const cc=[];
+    for(let i=0;i<=N;i++)cc[i]=couplerK(p.inv,K[i],i===0?'01':(i===N?`${N}${N+1}`:`${i}${i+1}`),i===0||i===N);
+    B.sh(cc[0].sym,cn(cc[0].sym,0,1),cc[0].val,roleOf(0));
+    for(let i=1;i<=N;i++){
+      const adj=cc[i-1].adjX+cc[i].adjX;
+      let Lp=Lt+adj/w0,Ci=Cr;
+      if(p.inv==='shC'){
+        // capacitive couplers leave series capacitors on the branch and add slope, so trim the branch capacitor to keep the slope at x
+        if(x-adj<=0){warn.push(`Branch ${i}: the shunt-capacitor couplers load the branch more than its reactance slope. Raise the resonator reactance X.`);}
+        else{Lp=Lt;Ci=1/(w0*(x-adj));}
+      }
+      if(Lp<=0)warn.push(`Branch ${i} needs a negative inductor after absorbing the coupling. Raise the resonator reactance X.`);
+      B.branch(i,Lp,Ci);
+      B.sh(cc[i].sym,cn(cc[i].sym,i,i+1),cc[i].val,roleOf(i));
+    }
+  }
+
+  /* shorted stubs with series C / L couplers: stub length trimmed to absorb the coupler susceptance */
+  else if(p.res==='stub'){
+    const Ys=1/p.Zr;
+    let b=flat(PI/4*Ys),th=[],cc=[],J=[];
+    for(let it=0;it<10;it++){
+      J=invVals(b,g,w,Y0);
+      for(let i=0;i<=N;i++)cc[i]=couplerJ(p.inv,J[i],i===0?'01':(i===N?`${N}${N+1}`:`${i}${i+1}`),i===0||i===N);
+      for(let i=1;i<=N;i++){
+        const adj=cc[i-1].adjS+cc[i].adjS;
+        th[i]=PI/2+Math.atan(adj/Ys);
+        b[i]=Ys*th[i]/(2*Math.pow(Math.sin(th[i]),2))+(Math.abs(cc[i-1].adjS)+Math.abs(cc[i].adjS))/2;
+      }
+    }
+    inverters=J;invUnit='S';invSym='J';
+    slopeTxt=`Stub impedance Zr = ${fx(p.Zr,4)} Ω. Stub lengths deviate from 90° to absorb the coupler susceptance, and the resulting slope is fed back into the inverter values.`;
+    B.ser(cc[0].sym,cn(cc[0].sym,0,1),cc[0].val,roleOf(0));
+    for(let i=1;i<=N;i++){
+      B.stub(`ST${i}`,p.Zr,th[i],`Resonator ${i}`);
+      B.ser(cc[i].sym,cn(cc[i].sym,i,i+1),cc[i].val,roleOf(i));
+    }
+  }
+
+  /* half-wave lines with any lumped coupler */
+  else {
+    const kind=(p.inv==='serC'||p.inv==='serL')?'J':'K';
+    const q0=invVals(flat(PI/2),g,w,1);
+    slopeTxt=`Resonators are λ/2 lines of impedance Z₀ = ${fx(Z0,4)} Ω (${kind==='J'?'susceptance':'reactance'} slope = π/2 · ${kind==='J'?'Y₀':'Z₀'})`;
+    if(q0.some(v=>v>=0.98))warn.push('A normalized inverter value reaches 1, so this coupling cannot be realized. Reduce the bandwidth or the order.');
+    const shorten=(p.inv==='serC'||p.inv==='shL');
+    // element list for a given set of normalized inverter values
+    const elems=q=>{
+      const qq=q.map(v=>Math.min(Math.max(v,1e-6),0.98)),t=qq.map(Math.atan),s=qq.map(v=>v/(1-v*v)),out=[];
+      for(let i=0;i<=N;i++){
+        let e;
+        switch(p.inv){
+          case 'serC':e={k:'ser',sym:'C',val:s[i]*Y0/w0,nm:cn('Cg',i,i+1)};break;
+          case 'serL':e={k:'ser',sym:'L',val:Z0/(s[i]*w0),nm:cn('Ls',i,i+1)};break;
+          case 'shL': e={k:'sh',sym:'L',val:s[i]*Z0/w0,nm:cn('Lp',i,i+1)};break;
+          default:    e={k:'sh',sym:'C',val:Y0/(s[i]*w0),nm:cn('Cp',i,i+1)};
+        }
+        e.th= i<N ? PI+(shorten?-1:1)*(t[i]+t[i+1]) : null;
+        out.push(e);
+      }
+      return out;
+    };
+    const blocksOf=q=>{
+      const bs=[];
+      elems(q).forEach(e=>{
+        if(e.k==='ser')bs.push(serBlock(e.sym==='C'?Zcap(e.val):Zind(e.val,0)));
+        else bs.push(shBlock(e.sym==='C'?Ycap(e.val):Yind(e.val,0)));
+        if(e.th!==null)bs.push(lineBlock(Z0,e.th,p.f0,0));
+      });
+      return bs;
+    };
+    let q=q0.slice();
+    if(!shorten){
+      // Inductive series / capacitive shunt couplers add reactive slope beyond the ideal model.
+      // Refine the inverter values so the simulated response follows the prototype.
+      const fs=[];for(let i=0;i<=60;i++)fs.push(p.f0*(1+(w*1.6)*(i/60*2-1)));
+      const tgt=fs.map(f=>{const id=idealDB(p,w,f);return [Math.pow(10,id.s21/20),Math.pow(10,id.s11/20)];});
+      const cost=m=>{
+        const bs=blocksOf(q0.map((v,i)=>v*m[i]));let c=0;
+        for(let k=0;k<fs.length;k++){
+          let M=bs[0](fs[k]);for(let j=1;j<bs.length;j++)M=mm(M,bs[j](fs[k]));
+          const r=sparams(M,Z0);c+=Math.pow(cabs(r.s21)-tgt[k][0],2)+Math.pow(cabs(r.s11)-tgt[k][1],2);
+        }
+        return c;
+      };
+      let m=q0.map(()=>1),best=cost(m),step=0.15;
+      for(let it=0;it<140&&step>1e-3;it++){
+        let imp=false;
+        for(let i=0;i<m.length;i++)for(const dir of [1,-1]){
+          const t=m.slice();t[i]*=1+dir*step;const c=cost(t);
+          if(c<best){best=c;m=t;imp=true;}
+        }
+        if(!imp)step*=0.5;
+      }
+      q=q0.map((v,i)=>v*m[i]);
+      slopeTxt+='. Inverter values were refined numerically because this coupler adds reactive slope that the ideal equations omit';
+    }
+    inverters=q.map(v=>v*(kind==='J'?Y0:Z0));invUnit=kind==='J'?'S':'Ω';invSym=kind;normQ=q.slice();
+    elems(q).forEach((e,i)=>{
+      if(e.k==='ser')B.ser(e.sym,e.nm,e.val,roleOf(i));else B.sh(e.sym,e.nm,e.val,roleOf(i));
+      if(e.th!==null)B.tl(`R${i+1}`,Z0,e.th,`Resonator ${i+1}`);
+    });
+  }
+  return {g,warn,B,inverters,invUnit,invSym,slopeTxt,normQ,w};
+}
+
+function idealDB(p,w,f){
+  const Om=(f/p.f0-p.f0/f)/w,N=p.N;let v;
+  if(p.resp==='butter')v=1/(1+Math.pow(Math.abs(Om),2*N));
+  else{const e2=Math.pow(10,p.rip/10)-1,a=Math.abs(Om);const T=a<=1?Math.cos(N*Math.acos(a)):Math.cosh(N*Math.acosh(a));v=1/(1+e2*T*T);}
+  return {s21:10*Math.log10(Math.max(v,1e-12)),s11:10*Math.log10(Math.max(1-v,1e-12))};
+}
+
+/* ---------- inputs ---------- */
+const scaleF=v=>Math.pow(10,(parseFloat(v)-1)*3);
+const hz=(id,sid)=>parseFloat($(id).value)*scaleF($(sid).value);
+function setFreqInput(textId,unitId,val){
+  const units=[[2e9,4,1e-9],[2e6,3,1e-6],[2e3,2,1e-3],[0,1,1]];
+  for(const [th,code,mult] of units){ if(val>=th){ $(textId).value=+(val*mult).toPrecision(6); $(unitId).value=code; return; } }
+}
+function readParams(){
+  const f1=hz('f1','f1_scale'),f2=hz('f2','f2_scale');
+  const p={res:$('Res').value,inv:$('Inv').value,resp:$('Response').value,rip:parseFloat($('Ripple').value),
+    N:Math.round(parseFloat($('Order').value)),f1,f2,f0:Math.sqrt(f1*f2),bw:f2-f1,
+    z0:parseFloat($('ZS').value),X:parseFloat($('X').value),Zr:parseFloat($('Zr').value),
+    eeff:parseFloat($('eeff').value),Q:parseFloat($('Q').value)||0};
+  const e=[];
+  if(!(p.N>=1&&p.N<=10))e.push('Order must be between 1 and 10.');
+  if(p.resp==='cheb'&&!(p.rip>=0.001&&p.rip<=3))e.push('Ripple must be between 0.001 and 3 dB.');
+  if(!(f1>0&&f2>f1))e.push('Enter a positive lower cutoff that is below the higher cutoff.');
+  if(f2-f1>=1.9*Math.sqrt(f1*f2))e.push('Bandwidth is too wide relative to f₀ for this method.');
+  if(!(p.z0>0))e.push('Z source/load must be positive.');
+  if((p.res==='par'||p.res==='ser')&&!(p.X>0))e.push('Resonator reactance X must be positive.');
+  if(p.res==='stub'&&!(p.Zr>0))e.push('Stub impedance must be positive.');
+  if(!(p.eeff>=1))e.push('Effective εr must be at least 1.');
+  return {p,e};
+}
+function sweepRange(p){
+  let fa,fb;
+  if(document.querySelector('input[name=fmode]:checked').value==='fmode1'){fa=hz('f_start','f_start_scale');fb=hz('f_stop','f_stop_scale');}
+  else{const c=hz('f0_span','f0_sweep_scale'),s=hz('fspan','span_scale');fa=c-s/2;fb=c+s/2;}
+  fa=Math.max(fa,1e-3*p.f0);
+  return {fa,fb};
+}
+function autoSweep(){
+  const f1=hz('f1','f1_scale'),f2=hz('f2','f2_scale');
+  if(!(f1>0&&f2>f1))return;
+  const f0=Math.sqrt(f1*f2),bw=f2-f1,fa=Math.max(f0-2.5*bw,0.05*f0),fb=f0+2.5*bw;
+  setFreqInput('f_start','f_start_scale',fa);setFreqInput('f_stop','f_stop_scale',fb);
+  setFreqInput('f0_span','f0_sweep_scale',(fa+fb)/2);setFreqInput('fspan','span_scale',fb-fa);
+}
+
+/* ---------- selectors and compatibility ---------- */
+function buildInvOptions(sel){
+  const res=$('Res').value, ok=COMPAT[res];
+  if(!ok.includes(sel))sel=ok[0];
+  $('Inv').innerHTML=Object.keys(INV).map(k=>`<option value="${k}" ${COMPAT[res].includes(k)?'':'disabled'} ${k===sel?'selected':''}>${INV[k].label}${COMPAT[res].includes(k)?'':' – not compatible'}</option>`).join('');
+}
+function buildMatrix(){
+  const res=$('Res').value, inv=$('Inv').value, ik=Object.keys(INV);
+  let h='<thead><tr class="rf_table_style"><td style="background:var(--thead);font-weight:600">Resonator</td>'+ik.map(k=>`<td style="background:var(--thead);font-weight:600">${INV[k].short}</td>`).join('')+'</tr></thead><tbody>';
+  Object.keys(RES).forEach(r=>{
+    h+=`<tr><td>${RES[r].name}</td>`+ik.map(k=>{
+      const ok=COMPAT[r].includes(k), sel=(r===res&&k===inv);
+      return ok?`<td class="cell-ok${sel?' sel':''}" tabindex="0" role="button" data-r="${r}" data-i="${k}" aria-label="${RES[r].name} with ${INV[k].short}">&#10003;</td>`:`<td class="cell-no">&ndash;</td>`;
+    }).join('')+'</tr>';
+  });
+  $('compat').innerHTML=h+'</tbody>';
+}
+function setCombo(r,i){
+  $('Res').value=r;buildInvOptions(i);$('compatMsg').hidden=true;schedule();
+}
+$('compat').addEventListener('click',e=>{const c=e.target.closest('.cell-ok');if(c)setCombo(c.dataset.r,c.dataset.i);});
+$('compat').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('cell-ok')){e.preventDefault();setCombo(e.target.dataset.r,e.target.dataset.i);}});
+
+function syncVisibility(){
+  const res=$('Res').value, inv=$('Inv').value;
+  document.querySelectorAll('.Ripple_input').forEach(r=>r.hidden=$('Response').value!=='cheb');
+  document.querySelectorAll('.X_input').forEach(r=>r.hidden=!(res==='par'||res==='ser'));
+  document.querySelectorAll('.Zr_input').forEach(r=>r.hidden=res!=='stub');
+  document.querySelectorAll('.eeff_input').forEach(r=>r.hidden=!(RES[res].tl||inv==='qw'));
+  $('XLbl').innerHTML=(res==='par'?'Tank':'Branch')+' reactance X = &omega;<sub>0</sub>L (&Omega;)';
+  const X=parseFloat($('X').value),f0=Math.sqrt(hz('f1','f1_scale')*hz('f2','f2_scale'));
+  if(X>0&&f0>0){const w0=2*PI*f0;$('xHint').innerHTML=`L = ${eng(X/w0,'H')}, C = ${eng(1/(w0*X),'F')} before coupling`;}else $('xHint').textContent='';
+}
+
+/* ---------- chart (canvas, styled like a Highcharts line chart) ---------- */
+let SIM=null,GEO=null;
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function niceStep(raw){const e=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/e;return(m<1.5?1:m<3?2:m<7?5:10)*e;}
+function drawPlot(hover){
+  if(!SIM)return;
+  const cv=$('plot'),ctx=cv.getContext('2d'),dpr=window.devicePixelRatio||1;
+  const W=Math.max(300,cv.parentElement.clientWidth-16),H=Math.round(Math.max(300,Math.min(460,W*0.5)));
+  cv.style.height=H+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+  const ink=css('--ink'),muted=css('--muted'),grid=css('--grid'),card=css('--card');
+  const C21='#e5262b',C11='#1f5fe0',CI=muted;
+  const {fr,s21,s11,i21,i11,fa,fb,U,uName,ymin,ymax,ystep,showIdeal}=SIM;
+  const ml=58,mr=18,mt=14,mb=70,pw=W-ml-mr,ph=H-mt-mb;
+  const X=f=>ml+(f-fa)/(fb-fa)*pw,Y=v=>mt+(ymax-Math.min(ymax,Math.max(ymin,v)))/(ymax-ymin)*ph;
+  ctx.fillStyle=card;ctx.fillRect(0,0,W,H);
+  ctx.font='12px system-ui,sans-serif';ctx.textBaseline='middle';
+  ctx.strokeStyle=grid;ctx.lineWidth=1;ctx.fillStyle=muted;ctx.textAlign='right';
+  for(let v=ymax;v>=ymin-1e-9;v-=ystep){const y=Math.round(Y(v))+.5;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+pw,y);ctx.stroke();ctx.fillText(String(+v.toFixed(2)),ml-8,y);}
+  const step=niceStep((fb-fa)/U/8),dec=Math.max(0,Math.ceil(-Math.log10(step)+1e-9));
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let v=Math.ceil(fa/U/step)*step;v<=fb/U+1e-12;v+=step){
+    const x=Math.round(X(v*U))+.5;ctx.beginPath();ctx.moveTo(x,mt);ctx.lineTo(x,mt+ph);ctx.stroke();ctx.fillText(v.toFixed(dec),x,mt+ph+7);
+  }
+  ctx.fillStyle=ink;ctx.font='600 13px system-ui,sans-serif';
+  ctx.fillText(`Frequency (${uName})`,ml+pw/2,mt+ph+26);
+  ctx.save();ctx.translate(14,mt+ph/2);ctx.rotate(-PI/2);ctx.textBaseline='middle';ctx.fillText('Magnitude (dB)',0,0);ctx.restore();
+  ctx.strokeStyle=muted;ctx.beginPath();ctx.moveTo(ml+.5,mt);ctx.lineTo(ml+.5,mt+ph);ctx.moveTo(ml,mt+ph+.5);ctx.lineTo(ml+pw,mt+ph+.5);ctx.stroke();
+  ctx.save();ctx.beginPath();ctx.rect(ml,mt,pw,ph);ctx.clip();
+  const tr=(a,col,wd,dash)=>{ctx.strokeStyle=col;ctx.lineWidth=wd;ctx.setLineDash(dash||[]);ctx.beginPath();for(let i=0;i<fr.length;i++){const x=X(fr[i]),y=Y(a[i]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();ctx.setLineDash([]);};
+  if(showIdeal){tr(i21,CI,1.2,[5,4]);tr(i11,CI,1.2,[5,4]);}
+  tr(s11,C11,2);tr(s21,C21,2);
+  ctx.restore();
+  // legend (bottom centre)
+  const items=[['S21',C21,false],['S11',C11,false]];if(showIdeal)items.push(['Ideal prototype',CI,true]);
+  ctx.font='13px system-ui,sans-serif';ctx.textBaseline='middle';ctx.textAlign='left';
+  const wid=items.map(it=>ctx.measureText(it[0]).width+38),tot=wid.reduce((a,b)=>a+b,0);
+  let lx=ml+pw/2-tot/2;const ly=H-14;
+  items.forEach((it,i)=>{ctx.strokeStyle=it[1];ctx.lineWidth=2;ctx.setLineDash(it[2]?[5,4]:[]);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+18,ly);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=it[1];ctx.beginPath();if(!it[2]){ctx.arc(lx+9,ly,3.5,0,2*PI);ctx.fill();}
+    ctx.fillStyle=ink;ctx.fillText(it[0],lx+24,ly);lx+=wid[i];});
+  GEO={ml,pw,n:fr.length};
+  if(hover!==null){
+    const x=X(fr[hover]);
+    ctx.strokeStyle=muted;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(x+.5,mt);ctx.lineTo(x+.5,mt+ph);ctx.stroke();ctx.setLineDash([]);
+    [[s21[hover],C21],[s11[hover],C11]].forEach(([v,c])=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,Y(v),4,0,2*PI);ctx.fill();});
+    const lines=[`${(fr[hover]/U).toFixed(Math.max(2,dec+2))} ${uName}`,`S21: ${s21[hover].toFixed(2)} dB`,`S11: ${s11[hover].toFixed(2)} dB`];
+    ctx.font='12.5px system-ui,sans-serif';
+    const tw=Math.max(...lines.map(l=>ctx.measureText(l).width))+20,th=lines.length*18+12;
+    let tx=x+14;if(tx+tw>ml+pw)tx=x-14-tw;const ty=mt+8;
+    ctx.fillStyle=card;ctx.strokeStyle=muted;ctx.lineWidth=1;ctx.fillRect(tx,ty,tw,th);ctx.strokeRect(tx+.5,ty+.5,tw,th);
+    ctx.textBaseline='middle';ctx.textAlign='left';
+    lines.forEach((l,i)=>{ctx.fillStyle=i===1?C21:(i===2?C11:ink);ctx.fillText(l,tx+10,ty+16+i*18);});
+  }
+}
+function hoverAt(ev){
+  if(!GEO||!SIM)return;
+  const r=$('plot').getBoundingClientRect(),i=Math.round((ev.clientX-r.left-GEO.ml)/GEO.pw*(GEO.n-1));
+  drawPlot(i<0||i>=GEO.n?null:i);
+}
+$('plot').addEventListener('pointermove',hoverAt);
+$('plot').addEventListener('pointerdown',hoverAt);
+$('plot').addEventListener('pointerleave',()=>drawPlot(null));
+new ResizeObserver(()=>drawPlot(null)).observe($('plot').parentElement);
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>drawPlot(null));
+
+/* ---------- schematic ---------- */
+const INK='#1a1a1a',MUT='#666';
+function symLocal(sym){
+  if(sym==='C')return `<line x1="-30" y1="0" x2="-4" y2="0"/><line x1="-4" y1="-11" x2="-4" y2="11"/><line x1="4" y1="-11" x2="4" y2="11"/><line x1="4" y1="0" x2="30" y2="0"/>`;
+  if(sym==='L')return `<path d="M-30 0H-16a4 4 0 0 1 8 0a4 4 0 0 1 8 0a4 4 0 0 1 8 0a4 4 0 0 1 8 0H30"/>`;
+  if(sym==='R')return `<polyline points="-34,0 -20,0 -16,-8 -8,8 0,-8 8,8 16,-8 20,0 34,0"/>`;
+  return '';
+}
+const gnd=(x,y)=>`<line x1="${x}" y1="${y}" x2="${x}" y2="${y+7}"/><line x1="${x-9}" y1="${y+7}" x2="${x+9}" y2="${y+7}"/><line x1="${x-5.5}" y1="${y+11}" x2="${x+5.5}" y2="${y+11}"/><line x1="${x-2}" y1="${y+15}" x2="${x+2}" y2="${y+15}"/>`;
+let schW=0,schH=270,view={k:1,x:0,y:0},schKey='';
+function renderSchematic(d,p){
+  const seq=d.B.seq,bus=76,gy=186;
+  const wOf=it=>it.t==='ser'?(it.sym==='TL'?122:104):112;
+  const total=120+seq.reduce((a,it)=>a+wOf(it),0);
+  let s='',x=60;const xl=26,xr=total-26,cy=(bus+gy)/2;
+  const gaps=[];
+  [xl,xr].forEach(tx=>{
+    s+=`<g transform="translate(${tx},${cy}) rotate(90)">${symLocal('R')}</g><line x1="${tx}" y1="${bus}" x2="${tx}" y2="${cy-34}"/><line x1="${tx}" y1="${cy+34}" x2="${tx}" y2="${gy}"/>${gnd(tx,gy)}`;
+    s+=`<text x="${tx}" y="${gy+36}">${fx(p.z0,4)} Ω</text>`;
+  });
+  s+=`<text class="m" x="${xl}" y="${bus-20}">source</text><text class="m" x="${xr}" y="${bus-20}">load</text>`;
+  seq.forEach(it=>{
+    const w=wOf(it),cx=x+w/2;x+=w;
+    if(it.t==='ser'){
+      gaps.push(it.sym==='TL'?[cx-50,cx+50]:[cx-30,cx+30]);
+      if(it.sym==='TL')s+=`<line x1="${cx-50}" y1="${bus}" x2="${cx-30}" y2="${bus}"/><line x1="${cx+30}" y1="${bus}" x2="${cx+50}" y2="${bus}"/><rect x="${cx-30}" y="${bus-12}" width="60" height="24" rx="2"/>`;
+      else s+=`<g transform="translate(${cx},${bus})">${symLocal(it.sym)}</g>`;
+      s+=`<text x="${cx}" y="${bus-34}">${it.lab[0]}</text><text class="m" x="${cx}" y="${bus-21}">${it.lab[1]}</text>`;
+    }else{
+      const br=(bx,sym)=>`<line x1="${bx}" y1="${bus}" x2="${bx}" y2="${cy-30}"/><g transform="translate(${bx},${cy}) rotate(90)">${symLocal(sym)}</g><line x1="${bx}" y1="${cy+30}" x2="${bx}" y2="${gy}"/>`;
+      if(it.sym==='LC')s+=br(cx-24,'L')+br(cx+24,'C')+`<circle class="dot" cx="${cx-24}" cy="${bus}" r="2.6"/><circle class="dot" cx="${cx+24}" cy="${bus}" r="2.6"/>${gnd(cx-24,gy)}${gnd(cx+24,gy)}`;
+      else if(it.sym==='stub')s+=`<circle class="dot" cx="${cx}" cy="${bus}" r="2.6"/><line x1="${cx}" y1="${bus}" x2="${cx}" y2="${bus+22}"/><rect x="${cx-11}" y="${bus+22}" width="22" height="${gy-bus-44}" rx="2"/><line x1="${cx}" y1="${gy-22}" x2="${cx}" y2="${gy}"/>${gnd(cx,gy)}`;
+      else s+=`<circle class="dot" cx="${cx}" cy="${bus}" r="2.6"/>${br(cx,it.sym)}${gnd(cx,gy)}`;
+      s+=`<text x="${cx}" y="${gy+36}">${it.lab[0]}</text><text class="m" x="${cx}" y="${gy+49}">${it.lab[1]}</text>`;
+    }
+  });
+  {let cur=xl;gaps.sort((p,q)=>p[0]-q[0]).forEach(([a,b])=>{if(a>cur)s+=`<line x1="${cur}" y1="${bus}" x2="${a}" y2="${bus}"/>`;cur=b;});if(xr>cur)s+=`<line x1="${cur}" y1="${bus}" x2="${xr}" y2="${bus}"/>`;}
+  schW=total;
+  $('schG').innerHTML=`<style>.sc line,.sc path,.sc rect,.sc polyline{stroke:${INK};stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}.sc .dot{fill:${INK};stroke:none}.sc text{fill:${INK};font:11px monospace;text-anchor:middle;stroke:none}.sc text.m{fill:${MUT}}</style><g class="sc">${s}</g>`;
+  const key=seq.map(i=>i.t+i.sym).join('');
+  if(key!==schKey){schKey=key;fitView();}else applyView();
+  $('schNote').textContent={
+    par:'Tank capacitors already include the neighbouring coupling contribution, so build them as shown.',
+    ser:'Branch inductors already include the neighbouring coupling contribution.',
+    stub:'Stub lengths are trimmed to absorb the coupler susceptance. Lengths are electrical degrees at f₀.',
+    half:'Line lengths are shortened or lengthened to compensate the phase of each coupling element, at f₀.'
+  }[p.res]+(p.inv==='qw'?' All inverter lines are 90° at f₀.':'');
+}
+function applyView(){ $('schG').setAttribute('transform',`translate(${view.x},${view.y}) scale(${view.k})`); }
+function fitView(){
+  const vp=$('schematic_viewport'),vw=vp.clientWidth||700,vh=vp.clientHeight||420;
+  const k=Math.min(vw/(schW+10),vh/(schH+40),1.4);
+  view={k,x:(vw-schW*k)/2,y:(vh-schH*k)/2};applyView();
+}
+function zoomAt(f,cx,cy){
+  const nk=Math.min(6,Math.max(0.1,view.k*f)),r=nk/view.k;
+  view.x=cx-(cx-view.x)*r;view.y=cy-(cy-view.y)*r;view.k=nk;applyView();
+}
+(() => {
+  const vp=$('schematic_viewport');let drag=null;
+  vp.addEventListener('wheel',e=>{e.preventDefault();const r=vp.getBoundingClientRect();zoomAt(e.deltaY<0?1.12:1/1.12,e.clientX-r.left,e.clientY-r.top);},{passive:false});
+  vp.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y};vp.setPointerCapture(e.pointerId);});
+  vp.addEventListener('pointermove',e=>{if(!drag)return;view.x=drag.vx+e.clientX-drag.x;view.y=drag.vy+e.clientY-drag.y;applyView();});
+  vp.addEventListener('pointerup',()=>drag=null);vp.addEventListener('pointercancel',()=>drag=null);
+  const c=()=>[vp.clientWidth/2,vp.clientHeight/2];
+  $('zin').onclick=()=>zoomAt(1.25,...c());$('zout').onclick=()=>zoomAt(0.8,...c());$('zfit').onclick=fitView;
+  $('zdl').onclick=()=>{
+    try{
+      const g=$('schG').cloneNode(true);g.removeAttribute('transform');
+      const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${schW}" height="${schH+30}" viewBox="0 0 ${schW} ${schH+30}"><rect width="100%" height="100%" fill="#fff"/>${g.outerHTML}</svg>`;
+      const img=new Image();
+      img.onload=()=>{const cv=document.createElement('canvas');cv.width=schW*2;cv.height=(schH+30)*2;const x=cv.getContext('2d');x.scale(2,2);x.drawImage(img,0,0);
+        const a=document.createElement('a');a.download='filter_schematic.png';a.href=cv.toDataURL('image/png');a.click();};
+      img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+    }catch(_){}
+  };
+})();
+new ResizeObserver(()=>{if(schW)fitView();}).observe($('schematic_viewport'));
+
+/* ---------- tables ---------- */
+function renderTables(d,p){
+  const N=p.N,sym=d.invSym;
+  const gr=d.g.map((v,i)=>`<tr><td>g${i}</td><td class="mono">${fx(v,6)}</td></tr>`).join('');
+  const ir=d.inverters.map((v,i)=>`<tr><td>${sym}${N>=9?`${i},${i+1}`:`${i}${i+1}`}</td><td class="mono">${eng(v,d.invUnit)}</td>${d.normQ?`<td class="mono">${fx(d.normQ[i],5)}</td>`:''}</tr>`).join('');
+  $('protoWrap').innerHTML=
+    `<div><h5 style="font-size:1rem;margin-bottom:4px">Lowpass prototype</h5><table class="table table-striped"><thead><tr><th>Element</th><th>Value</th></tr></thead><tbody>${gr}</tbody></table></div>`+
+    `<div><h5 style="font-size:1rem;margin-bottom:4px">${sym==='J'?'Admittance':'Impedance'} inverters</h5><table class="table table-striped"><thead><tr><th>Inverter</th><th>Value</th>${d.normQ?`<th>${sym}/${sym==='J'?'Y₀':'Z₀'}</th>`:''}</tr></thead><tbody>${ir}</tbody></table></div>`;
+  $('protoNote').textContent=d.slopeTxt+'. Inverter values use the standard direct-coupled equations with fractional bandwidth w = BW / f₀. '+WHY[p.res];
+}
+
+/* ---------- Qucs-S schematic export ---------- */
+function qv(v,u){
+  const P=[[1e-15,'f'],[1e-12,'p'],[1e-9,'n'],[1e-6,'u'],[1e-3,'m'],[1,''],[1e3,'k'],[1e6,'M'],[1e9,'G']];
+  let c=P[0];for(const x of P)if(Math.abs(v)>=x[0]*0.99995)c=x;
+  return `${+(v/c[0]).toFixed(2)} ${c[1]}${u}`;
+}
+function qucsSch(d,p,fa,fb,np){
+  const C0=299792458,BY=200,SPX=80,node=s=>s==='0'?-1:(s==='in'?0:+s.slice(1));
+  const ser=[],sh=[];let maxN=0;
+  // rebuild the ladder from the SPICE element list: series elements join node a to a+1, shunt elements go from node a to ground
+  d.B.sp.forEach(l=>{
+    const t=l.split(/\s+/),k=t[0][0];let el,a,b;
+    if(k==='T'){
+      a=node(t[1]);b=node(t[3]);
+      const z=parseFloat(t[5].slice(3)),td=parseFloat(t[6].slice(3));
+      el={type:'TLIN',name:t[0].slice(1),props:[[`${+z.toFixed(2)} Ohm`,1],[qv(td*C0,'m'),1],['0 dB',0],['26.85',0]]};
+    }else{
+      a=node(t[1]);b=node(t[2]);
+      const nm=t[0][1]===t[0][0]?t[0].slice(1):t[0],val=qv(parseFloat(t[3]),k==='C'?'F':'H');
+      el={type:k,name:nm,props:k==='C'?[[val,1],['',0],['neutral',0]]:[[val,1],['',0]]};
+    }
+    if(b<=0)(sh[a]=sh[a]||[]).push(el);else{ser[a]=el;maxN=Math.max(maxN,b);}
+  });
+  const pac=(n)=>({type:'Pac',name:'P'+n,props:[[String(n),1],[`${p.z0} Ohm`,1],['0 dBm',0],['1 GHz',0],['26.85',0]]});
+  sh[0]=[pac(1),...(sh[0]||[])];sh[maxN]=[...(sh[maxN]||[]),pac(2)];
+  const xs=[],re=[];let x=120;
+  for(let i=0;i<=maxN;i++){xs[i]=x;re[i]=x+(Math.max((sh[i]||[]).length,1)-1)*SPX;x=re[i]+120;}
+  const Cm=[],Wr=[];
+  const wire=(x1,y1,x2,y2)=>{if(x1!==x2||y1!==y2)Wr.push(`<${x1} ${y1} ${x2} ${y2} "" 0 0 0 "">`);};
+  const comp=(type,name,cx,cy,tx,ty,rot,props)=>Cm.push(`<${type} ${name} 1 ${cx} ${cy} ${tx} ${ty} 0 ${rot} ${props.map(q=>`"${q[0]}" ${q[1]}`).join(' ')}>`);
+  for(let i=0;i<=maxN;i++){
+    (sh[i]||[]).forEach((el,j)=>{
+      const sx=xs[i]+j*SPX;
+      if(j>0)wire(sx-SPX,BY,sx,BY);
+      wire(sx,BY,sx,BY+30);
+      comp(el.type,el.name,sx,BY+60,-26,55,1,el.props);
+      Cm.push(`<GND * 1 ${sx} ${BY+90} 0 0 0 0>`);
+    });
+    if(i<maxN&&ser[i]){
+      const e=ser[i],cx=re[i]+60;
+      wire(re[i],BY,cx-30,BY);
+      comp(e.type,e.name,cx,BY,-26,e.type==='TLIN'?-62:-45,0,e.props);
+      wire(cx+30,BY,xs[i+1],BY);
+    }
+  }
+  const SY=BY+230;
+  Cm.push(`<.SP SP1 1 120 ${SY} 0 67 0 0 "lin" 1 "${qv(fa,'Hz')}" 1 "${qv(fb,'Hz')}" 1 "${np}" 1 "no" 0 "1" 0 "2" 0 "yes" 0>`);
+  Cm.push(`<Eqn Eqn1 1 400 ${SY} -28 15 0 0 "S21_dB=dB(S[2,1])" 1 "S11_dB=dB(S[1,1])" 1 "yes" 0>`);
+  return `<Qucs Schematic 26.1.1>\n<Components>\n${Cm.join('\n')}\n</Components>\n<Wires>\n${Wr.join('\n')}\n</Wires>\n<Diagrams>\n</Diagrams>\n<Paintings>\n</Paintings>\n`;
+}
+
+/* Download link that does not rely on a scripted Blob click (works in embedded/sandboxed hosts) */
+function setQucsLink(){
+  let a=$('qucsLink');
+  if(!a){
+    a=document.createElement('a');a.id='qucsLink';a.className='btn btn-sm btn-outline-secondary';
+    a.textContent='Download link (right-click \u2192 Save link as\u2026)';
+    $('dlQucs').after(a);
+  }
+  a.href='data:text/plain;charset=utf-8,'+encodeURIComponent($('qucs').value);
+  a.download='direct_coupled_filter.sch';
+}
+
+/* ---------- main run ---------- */
+function run(){
+  const {p,e}=readParams();
+  if(e.length){$('alerts').innerHTML=e.map(x=>`<div class="alert alert-warning">${x}</div>`).join('');return;}
+  const d=synthesize(p),w=d.w,Z0=p.z0,bl=d.B.blocks;
+  const resp=f=>{let M=bl[0](f);for(let i=1;i<bl.length;i++)M=mm(M,bl[i](f));return sparams(M,Z0);};
+  const {fa,fb}=sweepRange(p);
+  const ymax=parseFloat($('y_axis_max').value),ymin0=parseFloat($('y_axis_min').value),ystep=Math.max(0.1,parseFloat($('y_axis_scale').value)||10);
+  const ymin=ymin0<ymax?ymin0:ymax-50;
+  if(!(fb>fa)){$('alerts').innerHTML='<div class="alert alert-warning">Stop frequency must be above start frequency.</div>';return;}
+  const np=Math.min(4001,Math.max(11,Math.round(parseFloat($('Points').value)||601)));
+  const fr=[],s21=[],s11=[],i21=[],i11=[];
+  for(let i=0;i<np;i++){const f=fa+(fb-fa)*i/(np-1);fr.push(f);const r=resp(f);s21.push(dB(r.s21));s11.push(dB(r.s11));const id=idealDB(p,w,f);i21.push(id.s21);i11.push(id.s11);}
+  const U=p.f0>=1e9?1e9:p.f0>=1e6?1e6:1e3, uName={1e3:'kHz',1e6:'MHz',1e9:'GHz'}[U];
+
+  const warns=[...new Set(d.warn)];
+  if(p.Q>0)warns.push(`Loss is included with unloaded Q = ${p.Q} for inductors and lines. The ideal overlay stays lossless.`);
+  $('alerts').innerHTML=warns.map(x=>`<div class="alert alert-warning">${x}</div>`).join('');
+
+  SIM={fr,s21,s11,i21,i11,fa,fb,U,uName,ymin,ymax,ystep,showIdeal:$('ideal').checked};
+  drawPlot(null);
+  renderSchematic(d,p);renderTables(d,p);
+  $('netlist').value=[
+    `* ${RES[p.res].name} resonators, ${INV[p.inv].label} inverters`,
+    `* ${p.resp==='cheb'?`Chebyshev ${p.rip} dB`:'Butterworth'} order ${p.N}, f1 = ${fx(p.f1/U,6)} ${uName}, f2 = ${fx(p.f2/U,6)} ${uName}, Z0 = ${p.z0} ohm`,
+    `Vs src 0 AC 1`,`Rs src in ${p.z0}`,...d.B.sp,`RL ${d.B.last} 0 ${p.z0}`,
+    `.ac lin ${np} ${sv(fa)} ${sv(fb)}`,`.end`].join('\n');
+  try{$('qucs').value=qucsSch(d,p,fa,fb,np);}catch(err){$('qucs').value='Qucs-S export failed: '+err.message;}
+  setQucsLink();
+  buildMatrix();
+}
+
+/* ---------- events ---------- */
+let pending=false;
+function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;syncVisibility();run();});}
+$('Res').addEventListener('change',()=>{
+  const prev=$('Inv').value,res=$('Res').value;
+  buildInvOptions(prev);
+  const now=$('Inv').value,msg=$('compatMsg');
+  if(now!==prev){msg.textContent=`${INV[prev].label} cannot be used with ${RES[res].name} resonators, so the inverter was changed to ${INV[now].label}. ${WHY[res]}`;msg.hidden=false;}
+  else msg.hidden=true;
+});
+['f1','f2','f1_scale','f2_scale'].forEach(id=>$(id).addEventListener('change',autoSweep));
+document.querySelectorAll('#leftForm,#rightForm').forEach(f=>{f.addEventListener('input',schedule);f.addEventListener('change',schedule);});
+document.querySelectorAll('input[name=fmode]').forEach(r=>r.addEventListener('change',()=>{
+  const m1=r.value==='fmode1'&&r.checked;
+  if(!r.checked)return;
+  if(m1){const c=hz('f0_span','f0_sweep_scale'),s=hz('fspan','span_scale');setFreqInput('f_start','f_start_scale',c-s/2);setFreqInput('f_stop','f_stop_scale',c+s/2);}
+  else{const a=hz('f_start','f_start_scale'),b=hz('f_stop','f_stop_scale');setFreqInput('f0_span','f0_sweep_scale',(a+b)/2);setFreqInput('fspan','span_scale',b-a);}
+  document.querySelectorAll('.sweep1').forEach(x=>x.hidden=!m1);document.querySelectorAll('.sweep2').forEach(x=>x.hidden=m1);
+  schedule();
+}));
+
+/* Dropdown: toggles an "open" class (host-CSS-proof) */
+$('simBtn').addEventListener('click',e=>{e.stopPropagation();$('simMenu').classList.toggle('open');});
+document.addEventListener('click',()=>$('simMenu').classList.remove('open'));
+$('openNet').addEventListener('click',()=>{$('netCard').hidden=false;$('netCard').scrollIntoView({behavior:'smooth',block:'nearest'});});
+$('openQucs').addEventListener('click',()=>{$('qucsCard').scrollIntoView({behavior:'smooth',block:'nearest'});});
+
+$('dlQucs').addEventListener('click',()=>{
+  setQucsLink();
+  $('qucsLink').click();
+});
+$('copyQucs').addEventListener('click',async()=>{
+  const ta=$('qucs');ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);
+  let ok=false;
+  try{ok=document.execCommand('copy');}catch(_){}
+  if(!ok){try{await navigator.clipboard.writeText(ta.value);ok=true;}catch(_){}}
+  $('copyQucs').textContent=ok?'Copied':'Selected: press Ctrl+C';
+  setTimeout(()=>$('copyQucs').textContent='Copy text',2500);
+});
+$('copy').addEventListener('click',async()=>{
+  const ta=$('netlist');ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);
+  let ok=false;
+  try{ok=document.execCommand('copy');}catch(_){}
+  if(!ok){try{await navigator.clipboard.writeText(ta.value);ok=true;}catch(_){}}
+  $('copy').textContent=ok?'Copied':'Selected: press Ctrl+C';
+  setTimeout(()=>$('copy').textContent='Copy netlist',2500);
+});
+
+document.querySelectorAll('.sweep2').forEach(x=>x.hidden=true);
+buildInvOptions('serC');
+autoSweep();
+syncVisibility();
+run();
+})();
+</script>
+</body>
+</html>
