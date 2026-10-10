@@ -3,36 +3,47 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>RF Design Tools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #eef3f7;
-    --grid: #d3dfe9;
-    --ink: #17283d;
-    --muted: #4f6278;
-    --line: #aebfce;
-    --trace: #c2185b;
-    --link: #1659c7;
-    --row-hover: #e1ebf4;
-    --notice: #fff3d6;
-    --notice-line: #c98a00;
+    --paper: #ffffff;
+    --card: #ffffff;
+    --grid: #e6e6e6;
+    --ink: #212529;
+    --muted: #6c757d;
+    --line: #dee2e6;
+    --ring: #adb5bd;
+    --outer: #1c2f4a;
+    --trace: #0d6efd;
+    --dot: #ffc107;
+    --link: #0d6efd;
+    --row-hover: #f1f3f5;
+    --notice: #fff3cd;
+    --notice-line: #ffc107;
+    --notice-ink: #664d03;
   }
   :root:not([data-theme="light"]) { color-scheme: light dark; }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --paper: #101c2b;
-      --grid: #1b2d42;
-      --ink: #e6eef6;
-      --muted: #9bb0c5;
-      --line: #35506b;
-      --trace: #ff6fa5;
-      --link: #7fb0ff;
-      --row-hover: #172a3f;
-      --notice: #2b2410;
-      --notice-line: #e0a82e;
+      --paper: #16191d;
+      --card: #1e2227;
+      --grid: #2f353b;
+      --ink: #e4e7ea;
+      --muted: #9aa4ad;
+      --line: #343a40;
+      --ring: #4b545c;
+      --outer: #e4e7ea;
+      --trace: #6ea8fe;
+      --dot: #ffda6a;
+      --link: #6ea8fe;
+      --row-hover: #262b31;
+      --notice: #332701;
+      --notice-line: #ffc107;
+      --notice-ink: #ffda6a;
     }
   }
   * { box-sizing: border-box; }
@@ -42,10 +53,6 @@
     font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     color: var(--ink);
     background-color: var(--paper);
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 32px 32px;
     line-height: 1.55;
   }
   .wrap { max-width: 920px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
@@ -66,13 +73,13 @@
   }
   .lede { max-width: 46ch; color: var(--muted); font-size: 1.1rem; margin: 0; }
   .smith { width: 100%; height: auto; display: block; }
-  .smith .ring { stroke: var(--line); fill: none; stroke-width: 1; }
-  .smith .outer { stroke: var(--ink); stroke-width: 1.6; }
+  .smith .ring { stroke: var(--ring); fill: none; stroke-width: 1; }
+  .smith .outer { stroke: var(--outer); stroke-width: 1.6; }
   .smith .trace { stroke: var(--trace); fill: none; stroke-width: 2.4; stroke-linecap: round; }
-  .smith .dot { fill: var(--trace); }
+  .smith .dot { fill: var(--dot); }
 
   h2 { font-size: 1.15rem; font-weight: 600; margin: 0 0 .75rem; }
-  ul.tools { list-style: none; margin: 0; padding: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; }
+  ul.tools { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); }
   ul.tools li + li { border-top: 1px solid var(--line); }
   ul.tools a {
     display: grid;
@@ -96,7 +103,7 @@
     border-left: 5px solid var(--notice-line);
     border-radius: 0 6px 6px 0;
     padding: 1rem 1.25rem;
-    color: var(--ink);
+    color: var(--notice-ink);
   }
   footer p { margin: 0; max-width: 68ch; }
   footer a { color: var(--link); }
@@ -201,6 +208,14 @@
         <a href="FDTD_tool.html">
           <span class="name">FDTD Solver</span>
           <p class="desc">FDTD EM simulation in the web browser.</p>
+          <span class="open">Open tool</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="SP-EM-Simulator.html">
+          <span class="name">Circuit capture and EM</span>
+          <p class="desc">Circuit and EM simulator.</p>
           <span class="open">Open tool</span>
         </a>
       </li>
